@@ -59,7 +59,7 @@ jobs:
           sudo docker stop snuvote || true &&
           sudo docker rm snuvote || true &&
           sudo docker run -d --name snuvote -p 8000:8000 \
-          --env-file .end.prod \
+          --env-file .env.prod \
           odumag99/snuvote:${{ env.VERSION }}"
           
     - name: Remove GitHub Actions IP
