@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "원하는 이름"
+version = "0.1.0"
+description = ""
+authors = ["dongkyu Kim <이메일@snu.ac.kr>"]
+readme = "README.md"
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.0"
+uvicorn = "^0.30.6"
+sqlalchemy = "^2.0.35"
+pymysql = "^1.1.1"
+alembic = "^1.13.3"
+email-validator = "^2.2.0"
+pydantic-settings = "^2.5.2"
+cryptography = "^43.0.1"
+python-jose = "^3.3.0"
+python-multipart = "^0.0.17"
+social-auth-core = "^4.5.4"
+aiomysql = "^0.2.0"
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
