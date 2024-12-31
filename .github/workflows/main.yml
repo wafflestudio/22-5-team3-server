@@ -50,6 +50,11 @@ jobs:
             --protocol tcp \
             --port 22 \
             --cidr ${{ steps.ip.outputs.ipv4 }}/32 || true
+
+    - name: Copy .env.prod to EC2
+      run: |
+        scp -i ssh_key -o StrictHostKeyChecking=no .env.prod ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/.env.prod
+                
     - name: Deploy to EC2
       run: |
         echo "${{ secrets.SERVER_SSH_KEY }}" > ssh_key
@@ -59,7 +64,7 @@ jobs:
           sudo docker stop snuvote || true &&
           sudo docker rm snuvote || true &&
           sudo docker run -d --name snuvote -p 8000:8000 \
-          --env-file .env.prod \
+          --env-file /home/${{ secrets.SERVER_USER }}/.env.prod \
           odumag99/snuvote:${{ env.VERSION }}"
           
     - name: Remove GitHub Actions IP
