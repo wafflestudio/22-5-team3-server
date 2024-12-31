@@ -10,7 +10,7 @@ RUN apt update && apt install -y \
     git && \
     apt clean
 # 프로젝트 의존성 파일 복사
-COPY pyproject.toml poetry.lock alebic.ini ./
+COPY pyproject.toml poetry.lock alembic.ini ./
 # Poetry를 사용하여 의존성 설치
 RUN poetry install --no-dev
 # 애플리케이션 코드 복사
