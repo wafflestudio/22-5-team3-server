@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from snuvote.app.user.dto.requests import UserSignupRequest
 from snuvote.app.user.dto.responses import MyProfileResponse
-from snuvote.app.user.models import User
+from snuvote.database.models import User
 from snuvote.app.user.service import UserService
 
 user_router = APIRouter()

@@ -3,20 +3,15 @@ from typing import Annotated
 
 from fastapi import Depends
 from snuvote.app.user.errors import EmailAlreadyExistsError, UserUnsignedError, UserIdAlreadyExistsError
-from snuvote.app.user.models import User
+from snuvote.database.models import User
 
-#아직 db 연결 구현 안했습니다.
-#from wapang.database.connection import get_db_session
-#from sqlalchemy import select, delete
-#from sqlalchemy.orm import Session
-#from sqlalchemy.ext.asyncio import AsyncSession
+from snuvote.database.connection import get_db_session
+from sqlalchemy import select, delete
+from sqlalchemy.orm import Session
 
 class UserStore:
-    def __init__(self) -> None:
-        self.id_counter = 0
-        self.store: dict[int, User] = {}
-        self.userid_index: dict[str, int] = {}
-        self.email_index: dict[str, int] = {}
+    def __init__(self, session: Annotated[Session, Depends(get_db_session)]) -> None:
+        self.session = session
 
 
     def add_user(self, userid: str, password: str, email: str):
@@ -26,23 +21,15 @@ class UserStore:
         if self.get_user_by_email(email):
             raise EmailAlreadyExistsError()
 
-        self.id_counter += 1
-        user = User(
-            id=self.id_counter, userid=userid, password=password, email=email
-        )
-        self.store[user.id] = user
-        self.userid_index[user.userid] = user.id
-        self.email_index[user.email] = user.id
+        user = User(userid=userid, password=password, email=email)
+        self.session.add(user)
+        self.session.commit()
+
         return user
 
+
     def get_user_by_userid(self, userid: str) -> User | None:
-        user_id = self.userid_index.get(userid)
-        if not user_id:
-            return None
-        return self.store[user_id]
-    
+        return self.session.scalar(select(User).where(User.userid == userid))
+
     def get_user_by_email(self, email: str) -> User | None:
-        user_id = self.email_index.get(email)
-        if not user_id:
-            return None
-        return self.store[user_id]
+        return self.session.scalar(select(User).where(User.email == email))
