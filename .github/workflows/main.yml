@@ -61,8 +61,10 @@ jobs:
       run: |
         ssh -i ssh_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
           sudo docker pull odumag99/snuvote:${{ env.VERSION }} &&
-          sudo docker stop snuvote || true &&
-          sudo docker rm snuvote || true &&
+          if [ \"\$(sudo docker ps -aq -f name=snuvote)\" ]; then
+            sudo docker stop snuvote
+            sudo docker rm snuvote
+          fi &&
           sudo docker run -d --name snuvote -p 8000:8000 \
           --env-file /home/${{ secrets.SERVER_USER }}/.env.prod \
           odumag99/snuvote:${{ env.VERSION }}"
