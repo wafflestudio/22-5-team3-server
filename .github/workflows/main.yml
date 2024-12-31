@@ -53,12 +53,12 @@ jobs:
 
     - name: Copy .env.prod to EC2
       run: |
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ssh_key
+        chmod 600 ssh_key
         scp -i ssh_key -o StrictHostKeyChecking=no .env.prod ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SERVER_USER }}/.env.prod
                 
     - name: Deploy to EC2
       run: |
-        echo "${{ secrets.SERVER_SSH_KEY }}" > ssh_key
-        chmod 600 ssh_key
         ssh -i ssh_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
           sudo docker pull odumag99/snuvote:${{ env.VERSION }} &&
           sudo docker stop snuvote || true &&
