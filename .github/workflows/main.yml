@@ -12,6 +12,12 @@ jobs:
     - name: Set Docker Permissions
       run: |
         sudo chmod 666 /var/run/docker.sock
+
+    - name: Generate .env.prod
+      run: |
+        echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.prod
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.prod
+        
     - name: Get Public IP
       id: ip
       uses: haythem/public-ip@v1.3
@@ -52,7 +58,10 @@ jobs:
           sudo docker pull odumag99/snuvote:${{ env.VERSION }} &&
           sudo docker stop snuvote || true &&
           sudo docker rm snuvote || true &&
-          sudo docker run -d --name snuvote -p 8000:8000 odumag99/snuvote:${{ env.VERSION }}"
+          sudo docker run -d --name snuvote -p 8000:8000 \
+          --env-file .end.prod \
+          odumag99/snuvote:${{ env.VERSION }}"
+          
     - name: Remove GitHub Actions IP
       run: |
         aws ec2 revoke-security-group-ingress \
