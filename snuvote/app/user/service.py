@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from snuvote.app.user.models import User
+from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
 
 

@@ -1,7 +1,7 @@
 from typing import Self
 from pydantic import BaseModel
 
-from snuvote.app.user.models import User
+from snuvote.database.models import User
 
 
 class MyProfileResponse(BaseModel):
