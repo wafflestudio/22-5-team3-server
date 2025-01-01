@@ -47,3 +47,6 @@ class UserSignupRequest(BaseModel):
     userid: Annotated[str, AfterValidator(validate_userid)]
     email: EmailStr
     password: Annotated[str, AfterValidator(validate_password)]
+    name: str
+    college: int
+

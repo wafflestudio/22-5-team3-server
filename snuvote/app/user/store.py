@@ -14,14 +14,14 @@ class UserStore:
         self.session = session
 
 
-    def add_user(self, userid: str, password: str, email: str):
+    def add_user(self, userid: str, password: str, email: str, name: str, college: int) -> User:
         if self.get_user_by_userid(userid):
             raise UserIdAlreadyExistsError()
 
         if self.get_user_by_email(email):
             raise EmailAlreadyExistsError()
 
-        user = User(userid=userid, password=password, email=email)
+        user = User(userid=userid, password=password, email=email, name=name, college=college)
         self.session.add(user)
         self.session.commit()
 
