@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, InvalidTokenError, ExpiredTokenError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError
 
 import jwt
 from datetime import datetime, timedelta
@@ -38,7 +38,7 @@ class UserService:
 
         refresh_payload = {
             "sub": userid,
-            "jti": uuid4().hex,
+            "jti": uuid4().hex, # 토큰의 고유 ID 생성 -> BlockedRefreshToken.token_id로 사용
             "exp": datetime.now() + timedelta(days=7),
             "typ": TokenType.REFRESH.value, # "typ": "refresh"
         }
@@ -66,3 +66,41 @@ class UserService:
             raise ExpiredTokenError()
         except jwt.InvalidTokenError:
             raise InvalidTokenError()
+
+    def validate_refresh_token(self, token: str) -> str:
+        """
+        refresh_token을 검증하고, username을 반환합니다.
+        """
+        try:
+            payload = jwt.decode(
+                token,
+                SECRET,
+                algorithms=["HS256"],
+                options={"require": ["sub"]},
+            )
+        except jwt.ExpiredSignatureError:
+            raise ExpiredTokenError()
+        except jwt.InvalidTokenError:
+            raise InvalidTokenError()
+        if payload["typ"] != TokenType.REFRESH.value:
+            raise InvalidTokenError()
+        if self.user_store.is_token_blocked(payload["jti"]):
+            raise BlockedRefreshTokenError()
+        
+        return payload["sub"]
+
+    def block_refresh_token(self, refresh_token: str) -> None:
+        """
+        refresh_token을 블록합니다.
+        """
+        payload = jwt.decode(
+            refresh_token, SECRET, algorithms=["HS256"], options={"require": ["jti"]}
+        )
+        token_id = payload["jti"]
+        expires_at = datetime.fromtimestamp(payload["exp"])
+        self.user_store.block_refresh_token(token_id, expires_at)
+
+    def reissue_tokens(self, refresh_token: str) -> tuple[str, str]:
+        userid = self.validate_refresh_token(refresh_token)
+        self.block_refresh_token(refresh_token)
+        return self.issue_tokens(userid)

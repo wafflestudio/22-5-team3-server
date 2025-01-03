@@ -14,9 +14,9 @@ security = HTTPBearer()
 
 def login_with_access_token(
     user_service: Annotated[UserService, Depends()],
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
 ) -> User:
-    token = credentials.credentials
+    token = credentials.credentials # Authorization 헤더에서 Bearer: 를 제외한 token만 추출
     userid = user_service.validate_access_token(token)
     user = user_service.get_user_by_userid(userid)
     if not user:
@@ -50,3 +50,12 @@ async def signin(
     return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)
 
 
+# refresh API
+@user_router.get("/refresh", status_code=HTTP_200_OK)
+def refresh(
+    user_service: Annotated[UserService, Depends()],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
+):
+    refresh_token = credentials.credentials
+    access_token, refresh_token = user_service.reissue_tokens(refresh_token)
+    return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)

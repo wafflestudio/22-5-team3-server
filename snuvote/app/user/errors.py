@@ -43,3 +43,7 @@ class InvalidTokenError():
 class ExpiredTokenError():
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "Expired token")
+
+class BlockedRefreshTokenError():
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Blocked refresh token")
