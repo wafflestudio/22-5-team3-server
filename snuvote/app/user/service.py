@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, InvalidTokenError, ExpiredTokenError
 
 import jwt
 from datetime import datetime, timedelta
@@ -24,12 +24,15 @@ class UserService:
     #ȸ������
     def add_user(self, userid: str, password: str, email: str, name: str, college: int):
         return self.user_store.add_user(userid=userid, password=password, email=email, name=name, college=college)
+
+    def get_user_by_userid(self, userid: str) -> User | None:
+        return self.user_store.get_user_by_userid(userid)
     
     def issue_tokens(self, userid: str) -> tuple[str, str]:
         access_payload = {
             "sub": userid, # 추후 성능 개선을 위해 payload에 단과대 등 추가
             "exp": datetime.now() + timedelta(hours=1),
-            "typ": TokenType.ACCESS.value,
+            "typ": TokenType.ACCESS.value, # "typ": "access"
         }
         access_token = jwt.encode(access_payload, SECRET, algorithm="HS256")
 
@@ -37,7 +40,7 @@ class UserService:
             "sub": userid,
             "jti": uuid4().hex,
             "exp": datetime.now() + timedelta(days=7),
-            "typ": TokenType.REFRESH.value,
+            "typ": TokenType.REFRESH.value, # "typ": "refresh"
         }
         refresh_token = jwt.encode(refresh_payload, SECRET, algorithm="HS256")
         return access_token, refresh_token
@@ -47,3 +50,19 @@ class UserService:
         if user is None or user.password != password:
             raise InvalidUsernameOrPasswordError()
         return self.issue_tokens(userid)
+    
+    def validate_access_token(self, token: str) -> str:
+        """
+        access_token을 검증하고, username을 반환합니다.
+        """
+        try:
+            payload = jwt.decode(
+                token, SECRET, algorithms=["HS256"], options={"require": ["sub"]}
+            )
+            if payload["typ"] != TokenType.ACCESS.value: # payload["typ"]  != "access"
+                raise InvalidTokenError()
+            return payload["sub"]
+        except jwt.ExpiredSignatureError:
+            raise ExpiredTokenError()
+        except jwt.InvalidTokenError:
+            raise InvalidTokenError()

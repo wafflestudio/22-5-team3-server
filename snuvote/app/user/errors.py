@@ -35,3 +35,11 @@ class UserUnsignedError(HTTPException):
 class InvalidUsernameOrPasswordError():
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "Invalid username or password")
+
+class InvalidTokenError():
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Invalid token")
+
+class ExpiredTokenError():
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Expired token")
