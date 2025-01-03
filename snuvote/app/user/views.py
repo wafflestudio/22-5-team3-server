@@ -10,7 +10,7 @@ user_router = APIRouter()
 
 
 
-# х╦©Ь ╟║ют
+# х╦О©╫О©╫ О©╫О©╫О©╫О©╫
 @user_router.post("/signup", status_code=HTTP_201_CREATED)
 def signup(
     signup_request: UserSignupRequest, user_service: Annotated[UserService, Depends()]
@@ -18,7 +18,7 @@ def signup(
     
 
     user = user_service.add_user(
-        signup_request.userid, signup_request.password, signup_request.email
+        signup_request.userid, signup_request.password, signup_request.email, signup_request.name, signup_request.college
     )
 
     return {"id":user.userid, "email":user.email}

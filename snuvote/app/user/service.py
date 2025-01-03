@@ -11,7 +11,7 @@ class UserService:
         self.user_store = user_store
 
     
-    #х╦©Ь╟║ют
-    def add_user(self, userid: str, password: str, email: str):
-        return self.user_store.add_user(userid=userid, password=password, email=email)
+    #х╦О©╫О©╫О©╫О©╫О©╫О©╫
+    def add_user(self, userid: str, password: str, email: str, name: str, college: int):
+        return self.user_store.add_user(userid=userid, password=password, email=email, name=name, college=college)
     
