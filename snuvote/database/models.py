@@ -83,3 +83,9 @@ class Comment(Base):
 
     content: Mapped[str] = mapped_column(Text, nullable=False)
     create_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+class BlockedRefreshToken(Base):
+    __tablename__ = "blocked_refresh_token"
+
+    token_id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
