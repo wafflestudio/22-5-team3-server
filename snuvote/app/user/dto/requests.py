@@ -50,3 +50,6 @@ class UserSignupRequest(BaseModel):
     name: str
     college: int
 
+class UserSigninRequest(BaseModel):
+    userid: str
+    password: str

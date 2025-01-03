@@ -31,3 +31,7 @@ class UserIdAlreadyExistsError(HTTPException):
 class UserUnsignedError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "User is not signed in")
+
+class InvalidUsernameOrPasswordError():
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Invalid username or password")

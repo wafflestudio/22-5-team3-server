@@ -15,4 +15,8 @@ class MyProfileResponse(BaseModel):
         return MyProfileResponse(
             userid=user.userid,
             email=user.email,
-        )
+    )
+
+class UserSigninResponse(BaseModel):
+    access_token: str
+    refresh_token: str
