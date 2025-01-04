@@ -84,7 +84,7 @@ class UserService:
             raise InvalidTokenError()
         if payload["typ"] != TokenType.REFRESH.value:
             raise InvalidTokenError()
-        if self.user_store.is_token_blocked(payload["jti"]):
+        if self.user_store.is_refresh_token_blocked(payload["jti"]):
             raise BlockedRefreshTokenError()
         
         return payload["sub"]
