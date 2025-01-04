@@ -31,3 +31,19 @@ class UserIdAlreadyExistsError(HTTPException):
 class UserUnsignedError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "User is not signed in")
+
+class InvalidUsernameOrPasswordError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Invalid userid or password")
+
+class InvalidTokenError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Invalid token")
+
+class ExpiredTokenError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Expired token")
+
+class BlockedRefreshTokenError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Blocked refresh token")

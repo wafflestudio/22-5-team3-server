@@ -1,9 +1,10 @@
 from functools import cache
 from typing import Annotated
+from datetime import datetime
 
 from fastapi import Depends
 from snuvote.app.user.errors import EmailAlreadyExistsError, UserUnsignedError, UserIdAlreadyExistsError
-from snuvote.database.models import User
+from snuvote.database.models import User, BlockedRefreshToken
 
 from snuvote.database.connection import get_db_session
 from sqlalchemy import select, delete
@@ -33,3 +34,16 @@ class UserStore:
 
     def get_user_by_email(self, email: str) -> User | None:
         return self.session.scalar(select(User).where(User.email == email))
+
+    def block_refresh_token(self, token_id: str, expires_at: datetime) -> None:
+        blocked_refresh_token = BlockedRefreshToken(token_id=token_id, expires_at=expires_at)
+        self.session.add(blocked_refresh_token)
+        self.session.commit()
+
+    def is_refresh_token_blocked(self, token_id: int) -> bool:
+        return (
+            self.session.scalar(
+                select(BlockedRefreshToken).where(BlockedRefreshToken.token_id == token_id)
+            )
+            is not None
+        )
