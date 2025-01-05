@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from snuvote.app.user.dto.requests import UserSignupRequest, UserSigninRequest
-from snuvote.app.user.dto.responses import MyProfileResponse, UserSigninResponse
+from snuvote.app.user.dto.responses import UserSigninResponse
 from snuvote.database.models import User
 from snuvote.app.user.service import UserService
 from snuvote.app.user.errors import InvalidTokenError
@@ -24,7 +24,7 @@ def login_with_access_token(
     return user
 
 
-# ȸ�� ����
+# signup API
 @user_router.post("/signup", status_code=HTTP_201_CREATED)
 def signup(
     signup_request: UserSignupRequest, user_service: Annotated[UserService, Depends()]

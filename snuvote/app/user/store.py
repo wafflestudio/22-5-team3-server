@@ -14,7 +14,7 @@ class UserStore:
     def __init__(self, session: Annotated[Session, Depends(get_db_session)]) -> None:
         self.session = session
 
-
+    #회원가입하기
     def add_user(self, userid: str, password: str, email: str, name: str, college: int) -> User:
         if self.get_user_by_userid(userid):
             raise UserIdAlreadyExistsError()
@@ -28,18 +28,21 @@ class UserStore:
 
         return user
 
-
+    #아이디로 유저찾기
     def get_user_by_userid(self, userid: str) -> User | None:
         return self.session.scalar(select(User).where(User.userid == userid))
 
+    #이메일로 유저찾기
     def get_user_by_email(self, email: str) -> User | None:
         return self.session.scalar(select(User).where(User.email == email))
 
+    #만료된 리프레쉬토큰 블랙하기
     def block_refresh_token(self, token_id: str, expires_at: datetime) -> None:
         blocked_refresh_token = BlockedRefreshToken(token_id=token_id, expires_at=expires_at)
         self.session.add(blocked_refresh_token)
         self.session.commit()
 
+    #리프레쉬토큰 만료 체크하기
     def is_refresh_token_blocked(self, token_id: int) -> bool:
         return (
             self.session.scalar(
