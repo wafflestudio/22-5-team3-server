@@ -17,6 +17,7 @@ jobs:
       run: |
         echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env.prod
         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.prod
+        echo "SECRET_FOR_JWT=${{ secrets.SECRET_FOR_JWT }}" >> .env.prod
         
     - name: Get Public IP
       id: ip
