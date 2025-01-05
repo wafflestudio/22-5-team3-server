@@ -24,13 +24,15 @@ class UserService:
         self.user_store = user_store
 
     
-    #ȸ������
-    def add_user(self, userid: str, password: str, email: str, name: str, college: int):
+    #회원가입
+    def add_user(self, userid: str, password: str, email: str, name: str, college: int) -> User:
         return self.user_store.add_user(userid=userid, password=password, email=email, name=name, college=college)
 
+    #아이디로 유저 찾기
     def get_user_by_userid(self, userid: str) -> User | None:
         return self.user_store.get_user_by_userid(userid)
     
+    #토큰 생성
     def issue_tokens(self, userid: str) -> tuple[str, str]:
         access_payload = {
             "sub": userid, # 추후 성능 개선을 위해 payload에 단과대 등 추가
@@ -48,12 +50,14 @@ class UserService:
         refresh_token = jwt.encode(refresh_payload, SECRET, algorithm="HS256")
         return access_token, refresh_token
 
+    #처음 로그인
     def signin(self, userid: str, password: str) -> tuple[str, str]:
         user = self.get_user_by_userid(userid)
         if user is None or user.password != password:
             raise InvalidUsernameOrPasswordError()
         return self.issue_tokens(userid)
     
+    #엑세스토큰 검증
     def validate_access_token(self, token: str) -> str:
         """
         access_token을 검증하고, username을 반환합니다.
@@ -70,6 +74,7 @@ class UserService:
         except jwt.InvalidTokenError:
             raise InvalidTokenError()
 
+    #리프레쉬토큰 검증
     def validate_refresh_token(self, token: str) -> str:
         """
         refresh_token을 검증하고, username을 반환합니다.
@@ -92,6 +97,7 @@ class UserService:
         
         return payload["sub"]
 
+    #만료된 리프레쉬토큰 블랙하기
     def block_refresh_token(self, refresh_token: str) -> None:
         """
         refresh_token을 블록합니다.
@@ -103,6 +109,7 @@ class UserService:
         expires_at = datetime.fromtimestamp(payload["exp"])
         self.user_store.block_refresh_token(token_id, expires_at)
 
+    #토큰 새로 발급
     def reissue_tokens(self, refresh_token: str) -> tuple[str, str]:
         userid = self.validate_refresh_token(refresh_token)
         self.block_refresh_token(refresh_token)
