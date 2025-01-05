@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import Vote
 from snuvote.app.vote.store import VoteStore
-from snuvote.app.vote.errors import InvalidFieldFormatError
+from snuvote.app.vote.errors import InvalidFieldFormatError, ParticipationCodeError
 
 from datetime import datetime, timedelta
 
@@ -23,6 +23,10 @@ class VoteService:
                  annonymous_choice:bool, 
                  vote_period:int,
                  writer_id:int) -> Vote:
+
+        #참여코드가 필요한데 참여코드가 없을 경우 400 에러
+        if participation_code_required and not participation_code:
+            raise ParticipationCodeError()
         
         return self.vote_store.add_vote(title=title,
                                          content=content, 

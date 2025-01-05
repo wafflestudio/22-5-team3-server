@@ -3,7 +3,6 @@ from typing import Annotated
 from datetime import datetime, timedelta
 
 from fastapi import Depends
-from snuvote.app.vote.errors import ParticipationCodeError
 from snuvote.database.models import Vote
 
 from snuvote.database.connection import get_db_session
@@ -29,9 +28,6 @@ class VoteStore:
         create_datetime = datetime.now()
         end_datetime = create_datetime + timedelta(days=vote_period)
 
-        #참여코드가 필요한데 참여코드가 없을 경우 400 에러
-        if participation_code_required and not participation_code:
-            raise ParticipationCodeError()
 
         vote = Vote(writer_id=writer_id, 
                     create_datetime=create_datetime, 
