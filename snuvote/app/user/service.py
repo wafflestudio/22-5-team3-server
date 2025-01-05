@@ -9,8 +9,11 @@ import jwt
 from datetime import datetime, timedelta
 from enum import Enum
 from uuid import uuid4
+from dotenv import load_dotenv
+import os
 
-SECRET = "secret_for_jwt" # .env.prod에서 불러오기
+load_dotenv(dotenv_path = '.env.prod')
+SECRET = os.getenv("SECRET_FOR_JWT") # .env.prod에서 불러오기
 
 class TokenType(Enum):
     ACCESS = "access"

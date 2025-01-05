@@ -19,6 +19,7 @@ class DatabaseSettings(BaseSettings):
         case_sensitive=False,
         env_prefix="DB_",
         env_file=SETTINGS.env_file,
+        extra = 'ignore'
     )
 
 
