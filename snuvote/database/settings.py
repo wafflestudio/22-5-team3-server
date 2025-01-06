@@ -13,7 +13,7 @@ class DatabaseSettings(BaseSettings):
 
     @property
     def url(self) -> str:
-        return f"mysql+pymysql://admin:{self.password}@{self.host}:3306/snuvote"
+        return f"mysql+pymysql://admin:{self.password}@{self.host}:{self.port}/snuvote"
 
     model_config = SettingsConfigDict(
         case_sensitive=False,
