@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List
-from snuvote.database.models import Vote, Choice, ChoiceParticipation
+from snuvote.database.models import Vote, User, Choice, ChoiceParticipation
 from pydantic import BaseModel
 
 
@@ -11,15 +11,25 @@ class VotesListInfoResponse(BaseModel):
     content: str
     create_datetime: datetime
     end_datetime: datetime
+    participated: bool
 
     @staticmethod
-    def from_vote(vote: Vote) -> "VotesListInfoResponse":
+    def from_vote_user(vote: Vote, user: User) -> "VotesListInfoResponse":
+
+        # 해당 유저의 참여 여부도 포함시켜야 함
+        participated = False
+        for choice in vote.choices:
+            for choice_participation in choice.choice_participations:
+                if choice_participation.user_id == user.id:
+                    participated = True
+
         return VotesListInfoResponse(
             id=vote.id,
             title=vote.title,
             content=vote.content,
             create_datetime=vote.create_datetime,
-            end_datetime=vote.end_datetime
+            end_datetime=vote.end_datetime,
+            participated = participated
         )
 
 class OnGoingVotesListResponse(BaseModel):
@@ -49,6 +59,7 @@ class ChoiceDetailResponse(BaseModel):
         if not realtime_result:
             num_participants = None
             participants_name = None
+
         
         return ChoiceDetailResponse(
             choice_id=id,

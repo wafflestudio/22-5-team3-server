@@ -54,11 +54,12 @@ def create_vote(
 # 진행 중인 투표 리스트 조회
 @vote_router.get("/ongoing_list", status_code=HTTP_200_OK)
 def get_ongoing_list(
+    user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()]
 ):
     votes = vote_service.get_ongoing_list()
     return OnGoingVotesListResponse(
-        votes_list = [ VotesListInfoResponse.from_vote(vote) for vote in votes],
+        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes],
         has_next = True,
         next_cursor = 'next_cursor'
     )
