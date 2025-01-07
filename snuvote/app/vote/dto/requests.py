@@ -4,7 +4,7 @@ from typing import Annotated, Callable, TypeVar, List
 from pydantic import BaseModel, EmailStr, Field
 from pydantic.functional_validators import AfterValidator
 
-from snuvote.app.vote.errors import InvalidFieldFormatError
+from snuvote.app.vote.errors import InvalidFieldFormatError, ChoicesNotProvidedError, ChoiceInvalidFormatError
 
 
 def validate_title(value: str) -> str:
@@ -28,7 +28,13 @@ def validate_vote_period(value: int) -> int:
         raise InvalidFieldFormatError()
     return value
 
-
+def validate_choices(value: List[str]) -> List[str]:
+    if len(value) < 1:
+        raise ChoicesNotProvidedError()
+    for content in value:
+        if len(content) < 1 or len(content) > 200:
+            raise ChoiceInvalidFormatError()
+    return value
 
 T = TypeVar("T")
 
@@ -57,3 +63,4 @@ class CreateVoteRequest(BaseModel):
     multiple_choice: bool
     annonymous_choice: bool
     vote_period: Annotated[int, AfterValidator(validate_vote_period)]
+    choices: Annotated[List[str], AfterValidator(validate_choices)]
