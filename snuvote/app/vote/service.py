@@ -23,7 +23,7 @@ class VoteService:
                  realtime_result:bool, 
                  multiple_choice:bool, 
                  annonymous_choice:bool, 
-                 vote_period:int,
+                 end_datetime:datetime,
                  choices: List[str]) -> Vote:
 
         #참여코드가 필요한데 참여코드가 없을 경우 400 에러
@@ -38,7 +38,7 @@ class VoteService:
                                         realtime_result=realtime_result, 
                                         multiple_choice=multiple_choice, 
                                         annonymous_choice=annonymous_choice, 
-                                        vote_period=vote_period,
+                                        end_datetime=end_datetime,
                                         choices=choices)
 
     # 진행 중인 투표 리스트 조회

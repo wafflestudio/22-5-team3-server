@@ -35,7 +35,7 @@ def create_vote(
         realtime_result=create_vote_request.realtime_result,
         multiple_choice=create_vote_request.multiple_choice,
         annonymous_choice=create_vote_request.annonymous_choice,
-        vote_period=create_vote_request.vote_period,
+        end_datetime=create_vote_request.end_datetime,
         choices=create_vote_request.choices
     )
 
