@@ -23,19 +23,22 @@ def create_vote(
 ):
     
     vote = vote_service.add_vote(
-        create_vote_request.title,
-        create_vote_request.content,
-        create_vote_request.participation_code_required,
-        create_vote_request.participation_code,
-        create_vote_request.realtime_result,
-        create_vote_request.multiple_choice,
-        create_vote_request.annonymous_choice,
-        create_vote_request.vote_period,
-        user.id
+        writer_id=user.id,
+        title=create_vote_request.title,
+        content=create_vote_request.content,
+        participation_code_required=create_vote_request.participation_code_required,
+        participation_code=create_vote_request.participation_code,
+        realtime_result=create_vote_request.realtime_result,
+        multiple_choice=create_vote_request.multiple_choice,
+        annonymous_choice=create_vote_request.annonymous_choice,
+        vote_period=create_vote_request.vote_period,
+        choices=create_vote_request.choices
     )
 
-    return {"title":vote.title, 
+    return {"id": vote.id,
+            "title":vote.title, 
             "content":vote.content, 
+            "choices":vote.choices,
             "participation_code":vote.participation_code, 
             "realtime_result":vote.realtime_result,
             "multiple_choice":vote.multiple_choice, 
