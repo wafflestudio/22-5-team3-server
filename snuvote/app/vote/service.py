@@ -40,3 +40,7 @@ class VoteService:
                                         annonymous_choice=annonymous_choice, 
                                         vote_period=vote_period,
                                         choices=choices)
+
+# 진행 중인 투표 리스트 조회
+    def get_ongoing_list(self) -> List[Vote]:
+        return self.vote_store.get_ongoing_list()
