@@ -6,7 +6,7 @@ from snuvote.app.user.dto.requests import UserSignupRequest, UserSigninRequest
 from snuvote.app.user.dto.responses import UserSigninResponse
 from snuvote.database.models import User
 from snuvote.app.user.service import UserService
-from snuvote.app.user.errors import InvalidTokenError
+from snuvote.app.user.errors import InvalidTokenError, UserNotFoundError
 
 user_router = APIRouter()
 
@@ -20,7 +20,7 @@ def login_with_access_token(
     userid = user_service.validate_access_token(token)
     user = user_service.get_user_by_userid(userid)
     if not user:
-        raise InvalidTokenError()
+        raise UserNotFoundError()
     return user
 
 
@@ -29,8 +29,6 @@ def login_with_access_token(
 def signup(
     signup_request: UserSignupRequest, user_service: Annotated[UserService, Depends()]
 ):
-    
-
     user = user_service.add_user(
         signup_request.userid, signup_request.password, signup_request.email, signup_request.name, signup_request.college
     )

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError
 
 import jwt
 from datetime import datetime, timedelta
@@ -67,12 +67,13 @@ class UserService:
                 token, SECRET, algorithms=["HS256"], options={"require": ["sub"]}
             )
             if payload["typ"] != TokenType.ACCESS.value: # payload["typ"]  != "access"
-                raise InvalidTokenError()
+                raise NotAccessTokenError()
             return payload["sub"]
-        except jwt.ExpiredSignatureError:
-            raise ExpiredTokenError()
         except jwt.InvalidTokenError:
             raise InvalidTokenError()
+        except jwt.ExpiredSignatureError:
+            raise ExpiredTokenError()
+
 
     #리프레쉬토큰 검증
     def validate_refresh_token(self, token: str) -> str:
@@ -86,12 +87,12 @@ class UserService:
                 algorithms=["HS256"],
                 options={"require": ["sub"]},
             )
-        except jwt.ExpiredSignatureError:
-            raise ExpiredTokenError()
         except jwt.InvalidTokenError:
             raise InvalidTokenError()
+        except jwt.ExpiredSignatureError:
+            raise ExpiredTokenError()
         if payload["typ"] != TokenType.REFRESH.value:
-            raise InvalidTokenError()
+            raise NotRefreshTokenError()
         if self.user_store.is_refresh_token_blocked(payload["jti"]):
             raise BlockedRefreshTokenError()
         

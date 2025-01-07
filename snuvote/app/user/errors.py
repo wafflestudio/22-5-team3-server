@@ -36,6 +36,18 @@ class InvalidUsernameOrPasswordError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "Invalid userid or password")
 
+class UserNotFoundError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "User not found")
+
+class NotAccessTokenError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Not an access token")
+
+class NotRefreshTokenError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Not a refresh token")       
+
 class InvalidTokenError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "Invalid token")
