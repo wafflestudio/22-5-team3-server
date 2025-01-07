@@ -4,7 +4,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 
 from snuvote.app.vote.dto.requests import CreateVoteRequest
-#from snuvote.app.vote.dto.responses import MyProfileResponse, UserSigninResponse
+from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse
 from snuvote.database.models import User
 from snuvote.app.vote.service import VoteService
 from snuvote.app.vote.errors import InvalidFieldFormatError
@@ -47,4 +47,14 @@ def create_vote(
             "end_datetime":vote.end_datetime
             }
 
-
+# 진행 중인 투표 리스트 조회
+@vote_router.get("/ongoing_list", status_code=HTTP_200_OK)
+def get_ongoing_list(
+    vote_service: Annotated[VoteService, Depends()]
+):
+    votes = vote_service.get_ongoing_list()
+    return OnGoingVotesListResponse(
+        votes_list = [ VotesListInfoResponse.from_vote(vote) for vote in votes],
+        has_next = True,
+        next_cursor = 'next_cursor'
+    )

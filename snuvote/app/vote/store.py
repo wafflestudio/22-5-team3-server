@@ -54,3 +54,7 @@ class VoteStore:
         self.session.commit()          
 
         return vote
+    
+    # 진행 중인 투표 리스트 조회
+    def get_ongoing_list(self) -> List[Vote]:
+        return self.session.execute(select(Vote).where(Vote.end_datetime > datetime.now())).scalars().all()
