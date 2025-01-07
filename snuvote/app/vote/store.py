@@ -24,11 +24,10 @@ class VoteStore:
                  realtime_result:bool, 
                  multiple_choice:bool, 
                  annonymous_choice:bool, 
-                 vote_period:int,
+                 end_datetime:datetime,
                  choices: List[str]) -> Vote:
         
         create_datetime = datetime.now()
-        end_datetime = create_datetime + timedelta(days=vote_period)
 
 
         vote = Vote(writer_id=writer_id, 
