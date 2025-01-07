@@ -23,3 +23,7 @@ class ChoicesNotProvidedError(HTTPException):
 class ChoiceInvalidFormatError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_400_BAD_REQUEST, "Invalid choice format")
+
+class VoteNotFoundError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_404_NOT_FOUND, "Vote not found")
