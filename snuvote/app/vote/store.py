@@ -58,3 +58,7 @@ class VoteStore:
     # 진행 중인 투표 리스트 조회
     def get_ongoing_list(self) -> List[Vote]:
         return self.session.execute(select(Vote).where(Vote.end_datetime > datetime.now())).scalars().all()
+
+    # 투표글 상세 내용 조회
+    def get_vote_by_vote_id(self, vote_id: int) -> Vote:
+        return self.session.scalar(select(Vote).where(Vote.id == vote_id))
