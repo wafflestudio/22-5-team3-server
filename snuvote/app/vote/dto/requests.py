@@ -51,13 +51,6 @@ def skip_none(validator: Callable[[T], T]) -> Callable[[T | None], T | None]:
     return wrapper
 
 
-def validate_choice_id_list(value:List[int]) -> List[int]:
-    if len(value) < 1:
-        raise ChoicesNotProvidedError()
-    
-    return value
-
-
 class CreateVoteRequest(BaseModel):
     '''
     제목 : 1~100자
@@ -77,4 +70,4 @@ class CreateVoteRequest(BaseModel):
 
 
 class ParticipateVoteRequest(BaseModel):
-    participated_choice_ids: Annotated[List[int], AfterValidator(validate_choice_id_list)]
+    participated_choice_ids: List[int]
