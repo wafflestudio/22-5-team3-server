@@ -40,16 +40,25 @@ class OnGoingVotesListResponse(BaseModel):
 class ChoiceDetailResponse(BaseModel):
     choice_id: int
     choice_content: str
+    participated: bool
     choice_num_participants: int|None = None
     choice_participants_name: List[str]|None = None
     
     # Choice를 받아 ChoiceDetailResponse로 변환
     @staticmethod
-    def from_choice(choice: Choice, annonymous_choice, realtime_result) -> "ChoiceDetailResponse":
+    def from_choice(choice: Choice, user: User, annonymous_choice, realtime_result) -> "ChoiceDetailResponse":
         id = choice.id
         content = choice.choice_content
         num_participants = len(choice.choice_participations)
         participants_name = [choice_participation.user.name for choice_participation in choice.choice_participations]
+
+
+        #로그인한 유저가 선택지를 선택했는지 여부
+        participated = False
+        for choice_participation in choice.choice_participations:
+            if user.id == choice_participation.user_id:
+                participated = True
+                break
 
         # 익명 투표인 경우 -> choice_participants_name = None
         if annonymous_choice:
@@ -64,15 +73,19 @@ class ChoiceDetailResponse(BaseModel):
         return ChoiceDetailResponse(
             choice_id=id,
             choice_content=content,
+            participated=participated,
             choice_num_participants=num_participants,
             choice_participants_name=participants_name
         )
 
 
 class VoteDetailResponse(BaseModel):
+    vote_id:int
     writer_name: str
+    is_writer: bool
     title: str
     content: str
+    participation_code_required: bool
     realtime_result: bool
     multiple_choice: bool
     annonymous_choice: bool

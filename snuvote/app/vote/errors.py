@@ -27,3 +27,19 @@ class ChoiceInvalidFormatError(HTTPException):
 class VoteNotFoundError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_404_NOT_FOUND, "Vote not found")
+
+class MultipleChoicesError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_400_BAD_REQUEST, "Multiple choices not allowed")
+
+class ChoiceNotFoundError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_404_NOT_FOUND, "Choice not found")
+
+class ParticipationCodeNotProvidedError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_403_FORBIDDEN, "Participation code not provided")
+
+class WrongParticipationCodeError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_403_FORBIDDEN, "Wrong participation code")

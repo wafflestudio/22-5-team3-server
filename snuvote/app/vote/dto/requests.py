@@ -67,3 +67,8 @@ class CreateVoteRequest(BaseModel):
     annonymous_choice: bool
     end_datetime: datetime
     choices: Annotated[List[str], AfterValidator(validate_choices)]
+
+
+class ParticipateVoteRequest(BaseModel):
+    participated_choice_ids: List[int]
+    participation_code: str | None

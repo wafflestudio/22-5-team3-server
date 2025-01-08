@@ -3,7 +3,7 @@ from typing import Annotated, List
 from datetime import datetime, timedelta
 
 from fastapi import Depends
-from snuvote.database.models import Vote, Choice
+from snuvote.database.models import Vote, Choice, ChoiceParticipation
 
 from snuvote.database.connection import get_db_session
 from sqlalchemy import select, delete
@@ -61,3 +61,25 @@ class VoteStore:
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
         return self.session.scalar(select(Vote).where(Vote.id == vote_id))
+    
+
+    #투표 참여하기
+    def participate_vote(self, vote: Vote, user_id: int, choice_id_list: List[int]) -> None:
+
+        # 참여하려고 하는 투표에 이미 투표를 한 상태라면 이전 선택지 참여는 제거하기
+        for choice in vote.choices:
+            choice_participation = self.session.scalar(
+                select(ChoiceParticipation).where((ChoiceParticipation.choice_id == choice.id) & (ChoiceParticipation.user_id == user_id)))
+            
+            if choice_participation is not None:
+                self.session.delete(choice_participation)
+        
+        self.session.flush()
+
+        # 선택한 선택지 생성하기
+        for choice_id in choice_id_list:
+            choice_participation = ChoiceParticipation(user_id=user_id, choice_id=choice_id)
+            self.session.add(choice_participation)
+
+        self.session.commit()
+        return vote
