@@ -6,7 +6,7 @@ from snuvote.app.user.store import UserStore
 from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError
 
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from uuid import uuid4
 from dotenv import load_dotenv
@@ -36,7 +36,7 @@ class UserService:
     def issue_tokens(self, userid: str) -> tuple[str, str]:
         access_payload = {
             "sub": userid, # 추후 성능 개선을 위해 payload에 단과대 등 추가
-            "exp": datetime.now() + timedelta(hours=1),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
             "typ": TokenType.ACCESS.value, # "typ": "access"
         }
         access_token = jwt.encode(access_payload, SECRET, algorithm="HS256")
@@ -44,7 +44,7 @@ class UserService:
         refresh_payload = {
             "sub": userid,
             "jti": uuid4().hex, # 토큰의 고유 ID 생성 -> BlockedRefreshToken.token_id로 사용
-            "exp": datetime.now() + timedelta(days=7),
+            "exp": datetime.now(timezone.utc) + timedelta(days=7),
             "typ": TokenType.REFRESH.value, # "typ": "refresh"
         }
         refresh_token = jwt.encode(refresh_payload, SECRET, algorithm="HS256")
@@ -69,10 +69,10 @@ class UserService:
             if payload["typ"] != TokenType.ACCESS.value: # payload["typ"]  != "access"
                 raise NotAccessTokenError()
             return payload["sub"]
-        except jwt.InvalidTokenError:
-            raise InvalidTokenError()
         except jwt.ExpiredSignatureError:
             raise ExpiredTokenError()
+        except jwt.InvalidTokenError:
+            raise InvalidTokenError()
 
 
     #리프레쉬토큰 검증
@@ -87,10 +87,10 @@ class UserService:
                 algorithms=["HS256"],
                 options={"require": ["sub"]},
             )
-        except jwt.InvalidTokenError:
-            raise InvalidTokenError()
         except jwt.ExpiredSignatureError:
             raise ExpiredTokenError()
+        except jwt.InvalidTokenError:
+            raise InvalidTokenError()
         if payload["typ"] != TokenType.REFRESH.value:
             raise NotRefreshTokenError()
         if self.user_store.is_refresh_token_blocked(payload["jti"]):
