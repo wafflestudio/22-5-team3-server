@@ -39,17 +39,7 @@ def create_vote(
         choices=create_vote_request.choices
     )
 
-    return {"id": vote.id,
-            "title":vote.title, 
-            "content":vote.content, 
-            "choices":vote.choices,
-            "participation_code":vote.participation_code, 
-            "realtime_result":vote.realtime_result,
-            "multiple_choice":vote.multiple_choice, 
-            "annonymous_choice":vote.annonymous_choice,
-            "create_datetime":vote.create_datetime,
-            "end_datetime":vote.end_datetime
-            }
+    return get_vote(vote.id, user, vote_service)
 
 # 진행 중인 투표 리스트 조회
 @vote_router.get("/ongoing_list", status_code=HTTP_200_OK)
@@ -115,22 +105,6 @@ def paricipate_vote(
         raise VoteNotFoundError()
 
     #투표 참여하기
-    vote_service.participate_vote(vote, user, participate_vote_request)
-
-
-    #투표 생성자 아이디와 유저 아이디가 같은 경우
-    is_writer = vote.writer_id == user.id
-
-    return VoteDetailResponse(
-        vote_id = vote.id,
-        writer_name = vote.writer.name,
-        is_writer= is_writer,
-        title = vote.title,
-        content = vote.content,
-        realtime_result = vote.realtime_result,
-        multiple_choice = vote.multiple_choice,
-        annonymous_choice = vote.annonymous_choice,
-        create_datetime = vote.create_datetime,
-        end_datetime = vote.end_datetime,
-        choices= [ChoiceDetailResponse.from_choice(choice, user, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
-    )
+    vote = vote_service.participate_vote(vote, user, participate_vote_request)
+    
+    return get_vote(vote.id, user, vote_service)
