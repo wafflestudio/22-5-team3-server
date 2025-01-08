@@ -80,6 +80,7 @@ class ChoiceDetailResponse(BaseModel):
 
 
 class VoteDetailResponse(BaseModel):
+    vote_id:int
     writer_name: str
     is_writer: bool
     title: str

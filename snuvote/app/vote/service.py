@@ -48,3 +48,6 @@ class VoteService:
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
         return self.vote_store.get_vote_by_vote_id(vote_id=vote_id)
+    
+    def participate_vote(self, vote_id:int, user_id: int, choice_id_list: List[int]) -> None:
+        return self.vote_store.participate_vote(vote_id=vote_id, user_id=user_id, choice_id_list=choice_id_list)

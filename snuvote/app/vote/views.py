@@ -5,9 +5,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic.functional_validators import AfterValidator
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 
-from snuvote.app.vote.dto.requests import CreateVoteRequest
+from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse
-from snuvote.app.vote.errors import VoteNotFoundError
+from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError
 
 from snuvote.database.models import User
 from snuvote.app.vote.service import VoteService
@@ -84,6 +84,7 @@ def get_vote(
     is_writer = vote.writer_id == user.id
 
     return VoteDetailResponse(
+        vote_id = vote.id,
         writer_name = vote.writer.name,
         is_writer= is_writer,
         title = vote.title,
@@ -95,3 +96,29 @@ def get_vote(
         end_datetime = vote.end_datetime,
         choices= [ChoiceDetailResponse.from_choice(choice, user.id, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
     )
+
+
+#투표 참여하기
+@vote_router.post("/{vote_id}/participate", status_code=HTTP_201_CREATED)
+def paricipate_vote(
+    vote_id: int,
+    user: Annotated[User, Depends(login_with_access_token)],
+    participate_vote_request: ParticipateVoteRequest,
+    vote_service: Annotated[VoteService, Depends()]
+):
+    
+    # 해당 vote_id에 해당하는 투표글 조회
+    vote = vote_service.get_vote_by_vote_id(vote_id = vote_id)
+
+    # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
+    if not vote:
+        raise VoteNotFoundError()
+
+    # 중복 투표 불가능인데 중복 투표 했을 때 
+    if not vote.multiple_choice and len(participate_vote_request.choice_id_list) > 1:
+        raise MultipleChoicesError()
+    
+    #투표 참여하기
+    vote_service.participate_vote(vote_id, user.id, participate_vote_request.choice_id_list)
+
+    return "Success"
