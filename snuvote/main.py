@@ -11,8 +11,8 @@ app.include_router(api_router, prefix="/api")
 
 
 @app.exception_handler(RequestValidationError)
-def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
     for error in exc.errors():
         if isinstance(error, dict) and error.get("type", None) == "missing":
             raise MissingRequiredFieldError()
-    return request_validation_exception_handler(request, exc)
+    return await request_validation_exception_handler(request, exc)
