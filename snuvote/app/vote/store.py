@@ -64,11 +64,9 @@ class VoteStore:
     
 
     #투표 참여하기
-    def participate_vote(self, vote_id: int, user_id: int, choice_id_list: List[int]) -> None:
+    def participate_vote(self, vote: Vote, user_id: int, choice_id_list: List[int]) -> None:
 
-        #참여하려고 하는 투표에 이미 투표를 한 상태라면 이전 선택지는 제거하기
-        vote = self.session.scalar(select(Vote).where(Vote.id == vote_id))
-
+        # 참여하려고 하는 투표에 이미 투표를 한 상태라면 이전 선택지 참여는 제거하기
         for choice in vote.choices:
             choice_participation = self.session.scalar(
                 select(ChoiceParticipation).where((ChoiceParticipation.choice_id == choice.id) & (ChoiceParticipation.user_id == user_id)))
@@ -81,9 +79,7 @@ class VoteStore:
         # 선택한 선택지 생성하기
         for choice_id in choice_id_list:
             choice_participation = ChoiceParticipation(user_id=user_id, choice_id=choice_id)
-
             self.session.add(choice_participation)
 
         self.session.commit()
-
-        return
+        return vote

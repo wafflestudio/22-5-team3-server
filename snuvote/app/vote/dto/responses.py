@@ -46,7 +46,7 @@ class ChoiceDetailResponse(BaseModel):
     
     # Choice를 받아 ChoiceDetailResponse로 변환
     @staticmethod
-    def from_choice(choice: Choice, user_id, annonymous_choice, realtime_result) -> "ChoiceDetailResponse":
+    def from_choice(choice: Choice, user: User, annonymous_choice, realtime_result) -> "ChoiceDetailResponse":
         id = choice.id
         content = choice.choice_content
         num_participants = len(choice.choice_participations)
@@ -56,7 +56,7 @@ class ChoiceDetailResponse(BaseModel):
         #로그인한 유저가 선택지를 선택했는지 여부
         participated = False
         for choice_participation in choice.choice_participations:
-            if user_id == choice_participation.user_id:
+            if user.id == choice_participation.user_id:
                 participated = True
                 break
 

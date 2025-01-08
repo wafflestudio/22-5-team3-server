@@ -30,9 +30,7 @@ class VoteNotFoundError(HTTPException):
 
 class MultipleChoicesError(HTTPException):
     def __init__(self) -> None:
-        super().__init__(HTTP_400_BAD_REQUEST, "You cannot vote multiple times")
-
-        ChoiceNotFoundError
+        super().__init__(HTTP_400_BAD_REQUEST, "Multiple choices not allowed")
 
 class ChoiceNotFoundError(HTTPException):
     def __init__(self) -> None:

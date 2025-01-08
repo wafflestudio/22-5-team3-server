@@ -94,7 +94,7 @@ def get_vote(
         annonymous_choice = vote.annonymous_choice,
         create_datetime = vote.create_datetime,
         end_datetime = vote.end_datetime,
-        choices= [ChoiceDetailResponse.from_choice(choice, user.id, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
+        choices= [ChoiceDetailResponse.from_choice(choice, user, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
     )
 
 
@@ -109,23 +109,13 @@ def paricipate_vote(
     
     # 해당 vote_id에 해당하는 투표글 조회
     vote = vote_service.get_vote_by_vote_id(vote_id = vote_id)
-    vote_choice_id_list = [choice.id for choice in vote.choices]
 
     # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
     if not vote:
         raise VoteNotFoundError()
 
-    # 중복 투표 불가능인데 중복 투표 했을 때 
-    if not vote.multiple_choice and len(participate_vote_request.choice_id_list) > 1:
-        raise MultipleChoicesError()
-    
-    # 해당 vote에 Request된 choice_id에 해당하는 선택지가 존재하지 않는 경우
-    for choice_id in participate_vote_request.choice_id_list:
-        if choice_id not in vote_choice_id_list:
-            raise ChoiceNotFoundError()
-    
     #투표 참여하기
-    vote_service.participate_vote(vote_id, user.id, participate_vote_request.choice_id_list)
+    vote_service.participate_vote(vote, user, participate_vote_request)
 
 
     #투표 생성자 아이디와 유저 아이디가 같은 경우
@@ -142,5 +132,5 @@ def paricipate_vote(
         annonymous_choice = vote.annonymous_choice,
         create_datetime = vote.create_datetime,
         end_datetime = vote.end_datetime,
-        choices= [ChoiceDetailResponse.from_choice(choice, user.id, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
+        choices= [ChoiceDetailResponse.from_choice(choice, user, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
     )

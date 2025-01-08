@@ -77,4 +77,4 @@ class CreateVoteRequest(BaseModel):
 
 
 class ParticipateVoteRequest(BaseModel):
-    choice_id_list: Annotated[List[int], AfterValidator(validate_choice_id_list)]
+    participated_choice_ids: Annotated[List[int], AfterValidator(validate_choice_id_list)]

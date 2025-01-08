@@ -1,9 +1,10 @@
 from typing import Annotated, List
 
 from fastapi import Depends
-from snuvote.database.models import Vote
+from snuvote.database.models import Vote, User, Choice, ChoiceParticipation
 from snuvote.app.vote.store import VoteStore
-from snuvote.app.vote.errors import InvalidFieldFormatError, ParticipationCodeError
+from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError
+from snuvote.app.vote.dto.requests import ParticipateVoteRequest
 
 from datetime import datetime, timedelta
 
@@ -49,5 +50,18 @@ class VoteService:
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
         return self.vote_store.get_vote_by_vote_id(vote_id=vote_id)
     
-    def participate_vote(self, vote_id:int, user_id: int, choice_id_list: List[int]) -> None:
-        return self.vote_store.participate_vote(vote_id=vote_id, user_id=user_id, choice_id_list=choice_id_list)
+    def participate_vote(self, vote: Vote, user: User, participate_vote_request: ParticipateVoteRequest) -> None:
+        # 중복 투표 불가능인데 중복 투표 했을 때
+        if not vote.multiple_choice and len(participate_vote_request.participated_choice_ids) > 1:
+            raise MultipleChoicesError()
+        
+        # 해당 vote에 Request된 choice_id에 해당하는 선택지가 존재하지 않는 경우
+        vote_choice_id_list = [choice.id for choice in vote.choices]
+        for choice_id in participate_vote_request.participated_choice_ids:
+            if choice_id not in vote_choice_id_list:
+                raise ChoiceNotFoundError()
+
+        user_id = user.id
+        choice_id_list = participate_vote_request.participated_choice_ids
+
+        return self.vote_store.participate_vote(vote=vote, user_id=user_id, choice_id_list=choice_id_list)
