@@ -7,7 +7,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZE
 
 from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse
-from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError
+from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError, ChoiceNotFoundError
 
 from snuvote.database.models import User
 from snuvote.app.vote.service import VoteService
@@ -109,6 +109,7 @@ def paricipate_vote(
     
     # 해당 vote_id에 해당하는 투표글 조회
     vote = vote_service.get_vote_by_vote_id(vote_id = vote_id)
+    vote_choice_id_list = [choice.id for choice in vote.choices]
 
     # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
     if not vote:
@@ -118,7 +119,28 @@ def paricipate_vote(
     if not vote.multiple_choice and len(participate_vote_request.choice_id_list) > 1:
         raise MultipleChoicesError()
     
+    # 해당 vote에 Request된 choice_id에 해당하는 선택지가 존재하지 않는 경우
+    for choice_id in participate_vote_request.choice_id_list:
+        if choice_id not in vote_choice_id_list:
+            raise ChoiceNotFoundError()
+    
     #투표 참여하기
     vote_service.participate_vote(vote_id, user.id, participate_vote_request.choice_id_list)
 
-    return "Success"
+
+    #투표 생성자 아이디와 유저 아이디가 같은 경우
+    is_writer = vote.writer_id == user.id
+
+    return VoteDetailResponse(
+        vote_id = vote.id,
+        writer_name = vote.writer.name,
+        is_writer= is_writer,
+        title = vote.title,
+        content = vote.content,
+        realtime_result = vote.realtime_result,
+        multiple_choice = vote.multiple_choice,
+        annonymous_choice = vote.annonymous_choice,
+        create_datetime = vote.create_datetime,
+        end_datetime = vote.end_datetime,
+        choices= [ChoiceDetailResponse.from_choice(choice, user.id, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
+    )
