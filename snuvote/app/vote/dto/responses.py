@@ -22,6 +22,7 @@ class VotesListInfoResponse(BaseModel):
             for choice_participation in choice.choice_participations:
                 if choice_participation.user_id == user.id:
                     participated = True
+                    break
 
         return VotesListInfoResponse(
             id=vote.id,
