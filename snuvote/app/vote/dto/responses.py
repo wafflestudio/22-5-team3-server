@@ -85,6 +85,7 @@ class VoteDetailResponse(BaseModel):
     is_writer: bool
     title: str
     content: str
+    participation_code_required: bool
     realtime_result: bool
     multiple_choice: bool
     annonymous_choice: bool

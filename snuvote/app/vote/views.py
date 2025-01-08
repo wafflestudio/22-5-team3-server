@@ -79,6 +79,7 @@ def get_vote(
         is_writer= is_writer,
         title = vote.title,
         content = vote.content,
+        participation_code_required = vote.participation_code_required,
         realtime_result = vote.realtime_result,
         multiple_choice = vote.multiple_choice,
         annonymous_choice = vote.annonymous_choice,
@@ -106,5 +107,5 @@ def paricipate_vote(
 
     #투표 참여하기
     vote = vote_service.participate_vote(vote, user, participate_vote_request)
-    
+
     return get_vote(vote.id, user, vote_service)
