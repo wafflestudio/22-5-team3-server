@@ -70,6 +70,7 @@ def get_ongoing_list(
 @vote_router.get("/{vote_id}", status_code=HTTP_200_OK)
 def get_vote(
     vote_id: int,
+    user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()]
 ):
     
@@ -78,9 +79,13 @@ def get_vote(
     # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
     if not vote:
         raise VoteNotFoundError()
+    
+    #투표 생성자 아이디와 유저 아이디가 같은 경우
+    is_writer = vote.writer_id == user.id
 
     return VoteDetailResponse(
         writer_name = vote.writer.name,
+        is_writer= is_writer,
         title = vote.title,
         content = vote.content,
         realtime_result = vote.realtime_result,
@@ -88,5 +93,5 @@ def get_vote(
         annonymous_choice = vote.annonymous_choice,
         create_datetime = vote.create_datetime,
         end_datetime = vote.end_datetime,
-        choices= [ChoiceDetailResponse.from_choice(choice, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
+        choices= [ChoiceDetailResponse.from_choice(choice, user.id, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
     )
