@@ -3,7 +3,7 @@ from typing import Annotated, List
 from fastapi import Depends
 from snuvote.database.models import Vote, User, Choice, ChoiceParticipation
 from snuvote.app.vote.store import VoteStore
-from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError
+from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError
 from snuvote.app.vote.dto.requests import ParticipateVoteRequest
 
 from datetime import datetime, timedelta
@@ -51,6 +51,16 @@ class VoteService:
         return self.vote_store.get_vote_by_vote_id(vote_id=vote_id)
     
     def participate_vote(self, vote: Vote, user: User, participate_vote_request: ParticipateVoteRequest) -> None:
+       
+        # 참여코드가 필요한 투표글인 경우
+        if vote.participation_code_required:
+            # 프론트에서 제공되지 않은 경우
+            if not participate_vote_request.participation_code:
+                raise ParticipationCodeNotProvidedError()
+            # 참여코드가 불일치하는 경우
+            if vote.participation_code != participate_vote_request.participation_code:
+                raise WrongParticipationCodeError()
+        
         # 중복 투표 불가능인데 중복 투표 했을 때
         if not vote.multiple_choice and len(participate_vote_request.participated_choice_ids) > 1:
             raise MultipleChoicesError()

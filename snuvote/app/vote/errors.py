@@ -35,3 +35,11 @@ class MultipleChoicesError(HTTPException):
 class ChoiceNotFoundError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_404_NOT_FOUND, "Choice not found")
+
+class ParticipationCodeNotProvidedError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_403_FORBIDDEN, "Participation code not provided")
+
+class WrongParticipationCodeError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_403_FORBIDDEN, "Wrong participation code")
