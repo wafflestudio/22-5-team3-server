@@ -32,8 +32,7 @@ class VoteStore:
 
         vote = Vote(writer_id=writer_id, 
                     create_datetime=create_datetime, 
-                    title=title, content=content, 
-                    status=True, 
+                    title=title, content=content,
                     end_datetime=end_datetime, 
                     participation_code_required=participation_code_required,
                     participation_code=participation_code,
