@@ -43,3 +43,7 @@ class ParticipationCodeNotProvidedError(HTTPException):
 class WrongParticipationCodeError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_403_FORBIDDEN, "Wrong participation code")
+    
+class EndedVoteError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_403_FORBIDDEN, "Ended vote")

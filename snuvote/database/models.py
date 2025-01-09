@@ -35,7 +35,6 @@ class Vote(Base):
     create_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[bool] = mapped_column(Boolean, nullable=False)
     end_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     participation_code_required: Mapped[bool] = mapped_column(Boolean, nullable=False)
     participation_code: Mapped[str] = mapped_column(String(20), nullable=True)
