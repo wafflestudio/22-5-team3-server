@@ -49,7 +49,7 @@ def get_ongoing_list(
 ):
     votes = vote_service.get_ongoing_list()
     return OnGoingVotesListResponse(
-        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes],
+        votes_list = list(reversed([ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes])),
         has_next = True,
         next_cursor = 'next_cursor'
     )
