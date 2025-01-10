@@ -52,7 +52,7 @@ class VoteService:
     
     def participate_vote(self, vote: Vote, user: User, participate_vote_request: ParticipateVoteRequest) -> None:
         # 종료 시간 이후인 경우
-        if datetime.now(tz=timezone.utc) > vote.end_datetime: 
+        if datetime.now(tz=timezone.utc) > vote.end_datetime.replace(tzinfo=timezone.utc): 
             raise EndedVoteError()
         
         # 참여코드가 필요한 투표글인 경우
