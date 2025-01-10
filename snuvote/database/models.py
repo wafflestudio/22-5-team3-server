@@ -32,10 +32,10 @@ class Vote(Base):
     writer_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("user.id"))
     writer: Mapped["User"] = relationship("User", back_populates="votes")
     
-    create_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    create_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    end_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    end_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     participation_code_required: Mapped[bool] = mapped_column(Boolean, nullable=False)
     participation_code: Mapped[str] = mapped_column(String(20), nullable=True)
     realtime_result: Mapped[bool] = mapped_column(Boolean, nullable=False)
