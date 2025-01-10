@@ -1,16 +1,23 @@
-from datetime import datetime
-from typing import List
+from datetime import datetime, timezone, timedelta
+from typing import List, Annotated
+
 from snuvote.database.models import Vote, User, Choice, ChoiceParticipation
 from pydantic import BaseModel
+from pydantic.functional_validators import AfterValidator
 
+KST = timezone(timedelta(hours=9), "KST")
+
+def convert_utc_to_ktc_naive(value: datetime) -> datetime:
+    value = value.replace(tzinfo=timezone.utc).astimezone(KST).replace(tzinfo=None) # UTC 시간대 주입 후 KST 시간대로 변환한 뒤 offset-naive로 변환
+    return value
 
 
 class VotesListInfoResponse(BaseModel):
     id: int
     title: str
     content: str
-    create_datetime: datetime
-    end_datetime: datetime
+    create_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
+    end_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     participated: bool
 
     @staticmethod
@@ -90,7 +97,7 @@ class VoteDetailResponse(BaseModel):
     realtime_result: bool
     multiple_choice: bool
     annonymous_choice: bool
-    create_datetime: datetime
-    end_datetime: datetime
+    create_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
+    end_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     choices: List[ChoiceDetailResponse]
 

@@ -3,10 +3,11 @@ import re
 from typing import Annotated, Callable, TypeVar, List
 from pydantic import BaseModel, EmailStr, Field
 from pydantic.functional_validators import AfterValidator
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
-from snuvote.app.vote.errors import InvalidFieldFormatError, ChoicesNotProvidedError, ChoiceInvalidFormatError
+from snuvote.app.vote.errors import InvalidFieldFormatError, ChoicesNotProvidedError, ChoiceInvalidFormatError, InvalidEndTimeError
 
+KST = timezone(timedelta(hours=9), "KST")
 
 def validate_title(value: str) -> str:
     if len(value) < 1 or len(value) > 100:
@@ -37,6 +38,13 @@ def validate_choices(value: List[str]) -> List[str]:
     for content in value:
         if len(content) < 1 or len(content) > 200:
             raise ChoiceInvalidFormatError()
+
+    return value
+
+def validate_end_datetime(value: datetime) -> datetime:
+    value = value.replace(tzinfo=KST).astimezone(timezone.utc) # offset_naive한 value가 한국 시간대였음을 주입하고 UTC로 변환
+    if datetime.now(tz=timezone.utc) >= value: 
+        raise InvalidEndTimeError()
     return value
 
 T = TypeVar("T")
@@ -65,7 +73,7 @@ class CreateVoteRequest(BaseModel):
     realtime_result: bool
     multiple_choice: bool
     annonymous_choice: bool
-    end_datetime: datetime
+    end_datetime: Annotated[datetime, AfterValidator(validate_end_datetime)] # end_datetime은 offset_naive임
     choices: Annotated[List[str], AfterValidator(validate_choices)]
 
 
