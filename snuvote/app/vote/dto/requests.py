@@ -71,4 +71,4 @@ class CreateVoteRequest(BaseModel):
 
 class ParticipateVoteRequest(BaseModel):
     participated_choice_ids: List[int]
-    participation_code: str | None
+    participation_code: str | None = None
