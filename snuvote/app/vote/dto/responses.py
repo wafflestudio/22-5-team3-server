@@ -8,7 +8,7 @@ from pydantic.functional_validators import AfterValidator
 KST = timezone(timedelta(hours=9), "KST")
 
 def convert_utc_to_ktc_naive(value: datetime) -> datetime:
-    value = value.astimezone(KST).replace(tzinfo=None) # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
+    value = value.replace(tzinfo=timezone.utc).astimezone(KST).replace(tzinfo=None) # UTC 시간대 주입 후 KST 시간대로 변환한 뒤 offset-naive로 변환
     return value
 
 
