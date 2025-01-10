@@ -42,8 +42,8 @@ def validate_choices(value: List[str]) -> List[str]:
     return value
 
 def validate_end_datetime(value: datetime) -> datetime:
-    value = value.replace(tzinfo=KST) # offset_naive한 value가 한국 시간대였음을 주입 -> offset_aware로 변환
-    if datetime.now(tz=KST) >= value: 
+    value = value.replace(tzinfo=KST).astimezone(timezone.utc) # offset_naive한 value가 한국 시간대였음을 주입하고 UTC로 변환
+    if datetime.now(tz=timezone.utc) >= value: 
         raise InvalidEndTimeError()
     return value
 

@@ -29,7 +29,7 @@ class VoteStore:
                  end_datetime:datetime,
                  choices: List[str]) -> Vote:
         
-        create_datetime = datetime.now(tz=timezone.utc) # Vote의 create_datetime은 MySQL Timestamp이기 때문에 UTC 시간대로 입력됨
+        create_datetime = datetime.now(tz=timezone.utc)
 
 
         vote = Vote(writer_id=writer_id, 
@@ -57,7 +57,7 @@ class VoteStore:
     
     # 진행 중인 투표 리스트 조회
     def get_ongoing_list(self) -> List[Vote]:
-        return self.session.execute(select(Vote).where(Vote.end_datetime > datetime.now(timezone(timedelta(hours=9))))).scalars().all()
+        return self.session.execute(select(Vote).where(Vote.end_datetime > datetime.now(timezone.utc))).scalars().all()
 
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
