@@ -9,6 +9,8 @@ from snuvote.database.connection import get_db_session
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
+KST = timezone(timedelta(hours=9), "KST")
+
 class VoteStore:
     def __init__(self, session: Annotated[Session, Depends(get_db_session)]) -> None:
         self.session = session
@@ -27,7 +29,7 @@ class VoteStore:
                  end_datetime:datetime,
                  choices: List[str]) -> Vote:
         
-        create_datetime = datetime.now(timezone(timedelta(hours=9)))
+        create_datetime = datetime.now(tz=timezone.utc) # Vote의 create_datetime은 MySQL Timestamp이기 때문에 UTC 시간대로 입력됨
 
 
         vote = Vote(writer_id=writer_id, 
