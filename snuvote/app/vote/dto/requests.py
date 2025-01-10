@@ -3,9 +3,9 @@ import re
 from typing import Annotated, Callable, TypeVar, List
 from pydantic import BaseModel, EmailStr, Field
 from pydantic.functional_validators import AfterValidator
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
-from snuvote.app.vote.errors import InvalidFieldFormatError, ChoicesNotProvidedError, ChoiceInvalidFormatError
+from snuvote.app.vote.errors import InvalidFieldFormatError, ChoicesNotProvidedError, ChoiceInvalidFormatError, InvalidEndTimeError
 
 
 def validate_title(value: str) -> str:
@@ -37,6 +37,12 @@ def validate_choices(value: List[str]) -> List[str]:
     for content in value:
         if len(content) < 1 or len(content) > 200:
             raise ChoiceInvalidFormatError()
+
+    return value
+
+def validate_end_datetime(value: datetime) -> datetime:
+    if datetime.now(timezone(timedelta(hours=9))) >= value:
+        raise InvalidEndTimeError()
     return value
 
 T = TypeVar("T")
@@ -65,7 +71,7 @@ class CreateVoteRequest(BaseModel):
     realtime_result: bool
     multiple_choice: bool
     annonymous_choice: bool
-    end_datetime: datetime
+    end_datetime: Annotated[datetime, AfterValidator(validate_end_datetime)]
     choices: Annotated[List[str], AfterValidator(validate_choices)]
 
 

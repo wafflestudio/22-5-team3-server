@@ -6,7 +6,7 @@ from snuvote.app.vote.store import VoteStore
 from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError
 from snuvote.app.vote.dto.requests import ParticipateVoteRequest
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 
@@ -53,7 +53,7 @@ class VoteService:
     def participate_vote(self, vote: Vote, user: User, participate_vote_request: ParticipateVoteRequest) -> None:
        
         # 종료 시간 이후인 경우
-        if datetime.now() > vote.end_datetime:
+        if datetime.now(timezone(timedelta(hours=9))) > vote.end_datetime:
             raise EndedVoteError()
         
         # 참여코드가 필요한 투표글인 경우

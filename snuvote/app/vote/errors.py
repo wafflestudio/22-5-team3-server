@@ -47,3 +47,8 @@ class WrongParticipationCodeError(HTTPException):
 class EndedVoteError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_403_FORBIDDEN, "Ended vote")
+
+
+class InvalidEndTimeError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_400_BAD_REQUEST, "Invalid end time")

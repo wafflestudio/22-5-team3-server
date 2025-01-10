@@ -1,6 +1,6 @@
 from functools import cache
 from typing import Annotated, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends
 from snuvote.database.models import Vote, Choice, ChoiceParticipation
@@ -27,7 +27,7 @@ class VoteStore:
                  end_datetime:datetime,
                  choices: List[str]) -> Vote:
         
-        create_datetime = datetime.now()
+        create_datetime = datetime.now(timezone(timedelta(hours=9)))
 
 
         vote = Vote(writer_id=writer_id, 
@@ -55,7 +55,7 @@ class VoteStore:
     
     # 진행 중인 투표 리스트 조회
     def get_ongoing_list(self) -> List[Vote]:
-        return self.session.execute(select(Vote).where(Vote.end_datetime > datetime.now())).scalars().all()
+        return self.session.execute(select(Vote).where(Vote.end_datetime > datetime.now(timezone(timedelta(hours=9))))).scalars().all()
 
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
