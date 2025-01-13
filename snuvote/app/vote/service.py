@@ -4,7 +4,7 @@ from fastapi import Depends
 from snuvote.database.models import Vote, User, Choice, ChoiceParticipation
 from snuvote.app.vote.store import VoteStore
 from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError
-from snuvote.app.vote.dto.requests import ParticipateVoteRequest
+from snuvote.app.vote.dto.requests import ParticipateVoteRequest, CommentRequest
 
 from datetime import datetime, timedelta, timezone
 
@@ -78,3 +78,6 @@ class VoteService:
         choice_id_list = participate_vote_request.participated_choice_ids
 
         return self.vote_store.participate_vote(vote=vote, user_id=user_id, choice_id_list=choice_id_list)
+    
+    def create_comment(self, vote: Vote, user: User, comment_request: CommentRequest) -> None:
+        self.vote_store.create_comment(vote_id=vote.id, writed_id=user.id, content=comment_request.content)
