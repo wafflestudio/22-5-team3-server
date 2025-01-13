@@ -1,11 +1,23 @@
+from functools import wraps
 from datetime import datetime, timezone, timedelta
-from typing import List, Annotated
+from typing import List, Annotated, TypeVar, Callable
 
-from snuvote.database.models import Vote, User, Choice, ChoiceParticipation
+from snuvote.database.models import Vote, User, Choice, ChoiceParticipation, Comment
 from pydantic import BaseModel
 from pydantic.functional_validators import AfterValidator
 
 KST = timezone(timedelta(hours=9), "KST")
+
+T = TypeVar("T")
+
+def skip_none(validator: Callable[[T], T]) -> Callable[[T | None], T | None]:
+    @wraps(validator)
+    def wrapper(value: T | None) -> T | None:
+        if value is None:
+            return value
+        return validator(value)
+
+    return wrapper
 
 def convert_utc_to_ktc_naive(value: datetime) -> datetime:
     value = value.replace(tzinfo=timezone.utc).astimezone(KST).replace(tzinfo=None) # UTC 시간대 주입 후 KST 시간대로 변환한 뒤 offset-naive로 변환
@@ -86,6 +98,39 @@ class ChoiceDetailResponse(BaseModel):
             choice_participants_name=participants_name
         )
 
+class CommentDetailResponse(BaseModel):
+    comment_id: int
+    writer_name: str
+    is_writer: bool
+    comment_content: str
+    created_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] 
+    is_edited: bool
+    edited_datetime: Annotated[datetime|None, AfterValidator(skip_none(convert_utc_to_ktc_naive))] = None
+
+    @staticmethod
+    def from_comment_user(comment: Comment, user: User) -> "CommentDetailResponse":
+        comment_id = comment.id
+        writer_name = comment.writer.name
+        is_writer = (user.id == comment.writer_id)
+        comment_content = comment.content
+        created_datetime = comment.create_datetime
+        is_edited = comment.is_edited
+
+        # is_edited가 True인 경우에만 edited_datetime을 주입
+        edited_datetime = None
+        if is_edited:
+            edited_datetime = comment.edited_datetime
+        
+        return CommentDetailResponse(
+            comment_id=comment_id,
+            writer_name=writer_name,
+            is_writer=is_writer,
+            comment_content=comment_content,
+            created_datetime=created_datetime,
+            is_edited=is_edited,
+            edited_datetime=edited_datetime
+        )
+        
 
 class VoteDetailResponse(BaseModel):
     vote_id:int
@@ -100,4 +145,5 @@ class VoteDetailResponse(BaseModel):
     create_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     end_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     choices: List[ChoiceDetailResponse]
+    comments: List[CommentDetailResponse]
 

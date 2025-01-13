@@ -80,3 +80,11 @@ class CreateVoteRequest(BaseModel):
 class ParticipateVoteRequest(BaseModel):
     participated_choice_ids: List[int]
     participation_code: str | None = None
+
+def validate_comment_content(value: str) -> str:
+    if len(value) < 1:
+        raise InvalidFieldFormatError()
+    return value
+
+class CommentRequest(BaseModel):
+    content: Annotated[str, AfterValidator(validate_comment_content)]

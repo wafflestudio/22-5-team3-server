@@ -3,7 +3,7 @@ from typing import Annotated, List
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends
-from snuvote.database.models import Vote, Choice, ChoiceParticipation
+from snuvote.database.models import Vote, Choice, ChoiceParticipation, Comment
 
 from snuvote.database.connection import get_db_session
 from sqlalchemy import select, delete
@@ -84,3 +84,10 @@ class VoteStore:
 
         self.session.commit()
         return vote
+    
+    def create_comment(self, vote_id: int, writed_id: int, content: str) -> Vote:
+        comment = Comment(vote_id=vote_id, writer_id=writed_id, content=content,
+                          create_datetime=datetime.now(timezone.utc),
+                          is_edited=False)
+        self.session.add(comment)
+        self.session.commit()

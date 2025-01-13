@@ -5,8 +5,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic.functional_validators import AfterValidator
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 
-from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest
-from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse
+from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest, CommentRequest
+from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse, CommentDetailResponse
 from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError, ChoiceNotFoundError
 
 from snuvote.database.models import User
@@ -85,7 +85,8 @@ def get_vote(
         annonymous_choice = vote.annonymous_choice,
         create_datetime = vote.create_datetime,
         end_datetime = vote.end_datetime,
-        choices= [ChoiceDetailResponse.from_choice(choice, user, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices]
+        choices= [ChoiceDetailResponse.from_choice(choice, user, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices],
+        comments = [CommentDetailResponse.from_comment_user(comment, user) for comment in vote.comments]
     )
 
 
@@ -107,5 +108,25 @@ def paricipate_vote(
 
     #투표 참여하기
     vote = vote_service.participate_vote(vote, user, participate_vote_request)
+
+    return get_vote(vote.id, user, vote_service)
+
+# 댓글 추가하기
+@vote_router.post("/{vote_id}/comment", status_code=HTTP_201_CREATED)
+def create_comment(
+    vote_id: int,
+    vote_service: Annotated[VoteService, Depends()],
+    user: Annotated[User, Depends(login_with_access_token)],
+    comment_request: CommentRequest
+):
+    # 해당 vote_id에 해당하는 투표글 조회
+    vote = vote_service.get_vote_by_vote_id(vote_id = vote_id)
+
+    # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
+    if not vote:
+        raise VoteNotFoundError()
+    
+    # 댓글 추가하기
+    vote_service.create_comment(vote, user, comment_request)
 
     return get_vote(vote.id, user, vote_service)
