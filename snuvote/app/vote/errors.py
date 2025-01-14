@@ -52,3 +52,15 @@ class EndedVoteError(HTTPException):
 class InvalidEndTimeError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_400_BAD_REQUEST, "Invalid end time")
+
+class CommentNotFoundError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_404_NOT_FOUND, "Comment not found")
+    
+class CommentNotYoursError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_403_FORBIDDEN, "Comment not yours")
+
+class CommentNotInThisVoteError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_404_NOT_FOUND, "Comment not in this vote")

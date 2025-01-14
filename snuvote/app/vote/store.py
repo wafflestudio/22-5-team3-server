@@ -91,3 +91,13 @@ class VoteStore:
                           is_edited=False)
         self.session.add(comment)
         self.session.commit()
+
+    def get_comment_by_comment_id(self, comment_id: int) -> Comment:
+        return self.session.scalar(select(Comment).where(Comment.id == comment_id))
+    
+    def edit_comment_content(self, comment_id: int, comment_content: str) -> None:
+        comment = self.get_comment_by_comment_id(comment_id)
+        comment.content = comment_content
+        comment.is_edited = True
+        comment.edited_datetime = datetime.now(timezone.utc)
+        self.session.commit()

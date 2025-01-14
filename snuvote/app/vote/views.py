@@ -7,7 +7,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZE
 
 from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest, CommentRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse, CommentDetailResponse
-from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError, ChoiceNotFoundError
+from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError, ChoiceNotFoundError, CommentNotFoundError
 
 from snuvote.database.models import User
 from snuvote.app.vote.service import VoteService
@@ -129,4 +129,29 @@ def create_comment(
     # 댓글 추가하기
     vote_service.create_comment(vote, user, comment_request)
 
+    return get_vote(vote.id, user, vote_service)
+
+# 댓글 수정하기
+@vote_router.patch("/{vote_id}/comment/{comment_id}", status_code=HTTP_200_OK)
+def edit_comment(
+    vote_id: int,
+    comment_id: int,
+    user: Annotated[User, Depends(login_with_access_token)],
+    comment_request: CommentRequest,
+    vote_service: Annotated[VoteService, Depends()]
+):
+    vote = vote_service.get_vote_by_vote_id(vote_id)
+    comment = vote_service.get_comment_by_comment_id(comment_id)
+
+    # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
+    if not vote:
+        raise VoteNotFoundError()
+
+    # 해당 comment에 해당하는 투표글이 없을 경우 404 Not Found
+    if not comment:
+        raise CommentNotFoundError()
+    
+    # 댓글 수정하기
+    vote_service.edit_comment(user, vote, comment, comment_request)
+    
     return get_vote(vote.id, user, vote_service)

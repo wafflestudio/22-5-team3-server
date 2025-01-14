@@ -1,9 +1,9 @@
 from typing import Annotated, List
 
 from fastapi import Depends
-from snuvote.database.models import Vote, User, Choice, ChoiceParticipation
+from snuvote.database.models import Vote, User, Choice, ChoiceParticipation, Comment
 from snuvote.app.vote.store import VoteStore
-from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError
+from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError, CommentNotYoursError, CommentNotInThisVoteError
 from snuvote.app.vote.dto.requests import ParticipateVoteRequest, CommentRequest
 
 from datetime import datetime, timedelta, timezone
@@ -81,3 +81,24 @@ class VoteService:
     
     def create_comment(self, vote: Vote, user: User, comment_request: CommentRequest) -> None:
         self.vote_store.create_comment(vote_id=vote.id, writed_id=user.id, content=comment_request.content)
+    
+    def get_comment_by_comment_id(self, comment_id:int) -> Comment:
+        return self.vote_store.get_comment_by_comment_id(comment_id)
+
+
+    def edit_comment(self, user: User, vote: Vote, comment: Comment, comment_request: CommentRequest) -> None:
+
+        # 만약 해당 Comment가 해당 Vote에 속하는 것이 아닐 경우
+        if comment.vote_id != vote.id:
+            raise CommentNotInThisVoteError()
+
+        # 해당 Comment가 해당 User의 것이 아닌 경우
+        if comment.writer_id != user.id:
+            raise CommentNotYoursError()
+
+        
+        # 해당 comment_content 수정
+        self.vote_store.edit_comment_content(
+            comment_id = comment.id,
+            comment_content = comment_request.content
+        )
