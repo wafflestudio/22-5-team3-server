@@ -88,13 +88,14 @@ class VoteService:
 
     def edit_comment(self, user: User, vote: Vote, comment: Comment, comment_request: CommentRequest) -> None:
 
+        # 만약 해당 Comment가 해당 Vote에 속하는 것이 아닐 경우
+        if comment.vote_id != vote.id:
+            raise CommentNotInThisVoteError()
+
         # 해당 Comment가 해당 User의 것이 아닌 경우
         if comment.writer_id != user.id:
             raise CommentNotYoursError()
 
-        # 만약 해당 Comment가 해당 Vote에 속하는 것이 아닐 경우
-        if comment.vote_id != vote.id:
-            raise CommentNotInThisVoteError()
         
         # 해당 comment_content 수정
         self.vote_store.edit_comment_content(
