@@ -155,3 +155,26 @@ def edit_comment(
     vote_service.edit_comment(user, vote, comment, comment_request)
     
     return get_vote(vote.id, user, vote_service)
+
+# 댓글 삭제하기
+@vote_router.delete("/{vote_id}/comment/{comment_id}", status_code=HTTP_200_OK)
+def delete_comment(
+    vote_id: int,
+    comment_id: int,
+    user: Annotated[User, Depends(login_with_access_token)],
+    vote_service: Annotated[VoteService, Depends()],
+):
+    vote = vote_service.get_vote_by_vote_id(vote_id)
+    comment = vote_service.get_comment_by_comment_id(comment_id)
+
+    # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
+    if not vote:
+        raise VoteNotFoundError()
+
+    # 해당 comment에 해당하는 투표글이 없을 경우 404 Not Found
+    if not comment:
+        raise CommentNotFoundError()
+    
+    vote_service.delete_comment(user, vote, comment)
+
+    return get_vote(vote.id, user, vote_service)

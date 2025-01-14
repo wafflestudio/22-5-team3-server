@@ -102,3 +102,15 @@ class VoteService:
             comment_id = comment.id,
             comment_content = comment_request.content
         )
+
+    def delete_comment(self, user: User, vote: Vote, comment: Comment) -> None:
+        # 만약 해당 Comment가 해당 Vote에 속하는 것이 아닐 경우
+        if comment.vote_id != vote.id:
+            raise CommentNotInThisVoteError()
+
+        # 해당 Comment가 해당 User의 것이 아닌 경우
+        if comment.writer_id != user.id:
+            raise CommentNotYoursError()
+    
+        # 해당 Comment를 삭제
+        self.vote_store.delete_comment_by_comment_id(comment_id = comment.id)
