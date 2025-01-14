@@ -101,3 +101,11 @@ class VoteStore:
         comment.is_edited = True
         comment.edited_datetime = datetime.now(timezone.utc)
         self.session.commit()
+
+    def delete_comment_by_comment_id(self, comment_id: int) -> None:
+        comment = self.get_comment_by_comment_id(comment_id)
+
+        # is_deleted = True로 바꾸고, deleted_datetime을 기록
+        comment.is_deleted = True
+        comment.deleted_datetime = datetime.now(timezone.utc)
+        self.session.commit()

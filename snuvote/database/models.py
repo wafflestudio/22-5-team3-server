@@ -82,8 +82,11 @@ class Comment(Base):
 
     content: Mapped[str] = mapped_column(Text, nullable=False)
     create_datetime: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     edited_datetime: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    deleted_datetime: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
 class BlockedRefreshToken(Base):
     __tablename__ = "blocked_refresh_token"
