@@ -20,6 +20,7 @@ jobs:
         echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.prod
         echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> .env.prod
         echo "SECRET_FOR_JWT=${{ secrets.SECRET_FOR_JWT }}" >> .env.prod
+        echo "SERVER_IP=${{ secrets.SERVER_IP }}" >> .env.prod
         
     - name: Get Public IP
       id: ip
