@@ -3,7 +3,7 @@ from typing import Annotated, List
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends
-from snuvote.database.models import Vote, Choice, ChoiceParticipation, Comment
+from snuvote.database.models import Vote, Choice, ChoiceParticipation, Comment, VoteImage
 
 from snuvote.database.connection import get_db_session
 from sqlalchemy import select, delete
@@ -51,10 +51,18 @@ class VoteStore:
                             choice_content = choice_content_input)
             self.session.add(choice)
         
-        self.session.commit()          
+        self.session.flush()
 
         return vote
     
+    def add_vote_image(self, vote_id: int, image_order: int, image_src: str):
+        new_voteimage = VoteImage(vote_id = vote_id,
+                                  order=image_order,
+                                  src = image_src)
+        
+        self.session.add(new_voteimage)
+        self.session.flush()
+
     # 진행 중인 투표 리스트 조회
     def get_ongoing_list(self) -> List[Vote]:
         return self.session.execute(select(Vote).where(Vote.end_datetime > datetime.now(timezone.utc))).scalars().all()

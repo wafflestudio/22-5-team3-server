@@ -146,4 +146,5 @@ class VoteDetailResponse(BaseModel):
     end_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     choices: List[ChoiceDetailResponse]
     comments: List[CommentDetailResponse]
+    images: List[str]
 

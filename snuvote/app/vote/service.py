@@ -1,6 +1,6 @@
 from typing import Annotated, List
 
-from fastapi import Depends
+from fastapi import Depends, UploadFile 
 from snuvote.database.models import Vote, User, Choice, ChoiceParticipation, Comment
 from snuvote.app.vote.store import VoteStore
 from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError, CommentNotYoursError, CommentNotInThisVoteError
@@ -8,14 +8,28 @@ from snuvote.app.vote.dto.requests import ParticipateVoteRequest, CommentRequest
 
 from datetime import datetime, timedelta, timezone
 
-
+import secrets
+import os
 
 class VoteService:
     def __init__(self, vote_store: Annotated[VoteStore, Depends()]) -> None:
         self.vote_store = vote_store
     
+    async def upload_vote_images(self, vote: Vote, images: List[UploadFile]) -> None:
+        # voteimage를 저장하고 DB에 정보를 저장하는 함수
+        image_order = 0
+        for image in images:
+            image_order += 1
+            image_name = f'{secrets.token_urlsafe(16)}.{image.filename.split(".")[-1]}'
+            image_path = f'./images/{image_name}' # 임시로 도커 컨테이너 '/src/images'에 저장
+            with open(image_path, 'wb') as f:
+                f.write(await image.read())
+            image_src = f'http://{os.getenv("SERVER_IP")}:8000/api/images/{image_name}' # 이미지를 불러올 수 있는 URL
+            self.vote_store.add_vote_image(vote_id=vote.id, image_order=image_order, image_src=image_src)
+
+
     #투표 추가하기
-    def add_vote(self,
+    async def add_vote(self,
                  writer_id:int,
                  title: str, 
                  content: str, 
@@ -25,13 +39,15 @@ class VoteService:
                  multiple_choice:bool, 
                  annonymous_choice:bool, 
                  end_datetime:datetime,
-                 choices: List[str]) -> Vote:
+                 choices: List[str],
+                 images: List[UploadFile]) -> Vote:
 
         #참여코드가 필요한데 참여코드가 없을 경우 400 에러
         if participation_code_required and not participation_code:
             raise ParticipationCodeError()
         
-        return self.vote_store.add_vote(writer_id=writer_id,
+        # 투표 추가
+        vote = self.vote_store.add_vote(writer_id=writer_id,
                                         title=title,
                                         content=content, 
                                         participation_code_required=participation_code_required,
@@ -41,6 +57,13 @@ class VoteService:
                                         annonymous_choice=annonymous_choice, 
                                         end_datetime=end_datetime,
                                         choices=choices)
+        
+        # 이미지 업로드
+        if images:
+            await self.upload_vote_images(vote, images)
+
+        return self.vote_store.get_vote_by_vote_id(vote_id=vote.id)
+
 
     # 진행 중인 투표 리스트 조회
     def get_ongoing_list(self) -> List[Vote]:

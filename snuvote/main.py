@@ -1,9 +1,12 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 
 from snuvote.api import api_router
 from snuvote.app.user.errors import MissingRequiredFieldError
+
+load_dotenv(dotenv_path = '.env.prod')
 
 app = FastAPI()
 
