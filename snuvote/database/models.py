@@ -46,6 +46,8 @@ class Vote(Base):
     
     comments: Mapped[Optional[List["Comment"]]] = relationship("Comment", back_populates="vote", uselist=True)
 
+    images: Mapped[Optional[List["VoteImage"]]] = relationship("VoteImage", back_populates="vote", uselist=True)
+
 class Choice(Base):
     __tablename__ = "choice"
 
@@ -93,3 +95,15 @@ class BlockedRefreshToken(Base):
 
     token_id: Mapped[str] = mapped_column(String(255), primary_key=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+class VoteImage(Base):
+    __tablename__ = "vote_image"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    vote_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("vote.id"))
+    vote: Mapped["Vote"] = relationship("Vote", back_populates="images", uselist=False)
+
+    order: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    src: Mapped[str] = mapped_column(String(255), nullable=False)
