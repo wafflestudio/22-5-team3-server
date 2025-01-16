@@ -8,6 +8,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZE
 from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest, CommentRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse, CommentDetailResponse
 from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError, ChoiceNotFoundError, CommentNotFoundError
+from datetime import datetime, timedelta, timezone
 
 from snuvote.database.models import User
 from snuvote.app.vote.service import VoteService
@@ -45,13 +46,14 @@ def create_vote(
 @vote_router.get("/ongoing_list", status_code=HTTP_200_OK)
 def get_ongoing_list(
     user: Annotated[User, Depends(login_with_access_token)],
+    start_cursor: datetime|None,
     vote_service: Annotated[VoteService, Depends()]
 ):
-    votes = vote_service.get_ongoing_list()
+    votes, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
     return OnGoingVotesListResponse(
-        votes_list = list(reversed([ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes])),
-        has_next = True,
-        next_cursor = 'next_cursor'
+        votes_list = list([ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes]),
+        has_next = has_next,
+        next_cursor = next_cursor
     )
 
 

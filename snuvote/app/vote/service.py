@@ -43,8 +43,8 @@ class VoteService:
                                         choices=choices)
 
     # 진행 중인 투표 리스트 조회
-    def get_ongoing_list(self) -> List[Vote]:
-        return self.vote_store.get_ongoing_list()
+    def get_ongoing_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime]:
+        return self.vote_store.get_ongoing_list(start_cursor)
     
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
