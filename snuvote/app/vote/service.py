@@ -24,7 +24,7 @@ class VoteService:
             image_path = f'./images/{image_name}' # 임시로 도커 컨테이너 '/src/images'에 저장
             with open(image_path, 'wb') as f:
                 f.write(await image.read())
-            image_src = f'http://{os.getenv("SERVER_IP")}:8000/api/images/{image_name}' # 이미지를 불러올 수 있는 URL
+            image_src = f'http://{os.getenv("SERVER_IP")}/api/images/{image_name}' # 이미지를 불러올 수 있는 URL
             self.vote_store.add_vote_image(vote_id=vote.id, image_order=image_order, image_src=image_src)
 
 
@@ -40,7 +40,7 @@ class VoteService:
                  annonymous_choice:bool, 
                  end_datetime:datetime,
                  choices: List[str],
-                 images: List[UploadFile]) -> Vote:
+                 images: List[UploadFile]|None) -> Vote:
 
         #참여코드가 필요한데 참여코드가 없을 경우 400 에러
         if participation_code_required and not participation_code:
