@@ -16,7 +16,7 @@ def validate_title(value: str) -> str:
 
 
 def validate_content(value: str) -> str:
-    if len(value) < 1 or len(value) > 200:
+    if len(value) < 1:
         raise InvalidFieldFormatError()
     return value
 
@@ -62,9 +62,9 @@ def skip_none(validator: Callable[[T], T]) -> Callable[[T | None], T | None]:
 class CreateVoteRequest(BaseModel):
     '''
     제목 : 1~100자
-    내용 : 1~200자
+    내용 : 1~자
     비번 : 6자
-    기간 : 1~14
+    기간 : 현재부터~
     '''
     title: Annotated[str, AfterValidator(validate_title)]
     content: Annotated[str, AfterValidator(validate_content)]
