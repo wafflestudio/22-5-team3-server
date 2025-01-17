@@ -31,6 +31,7 @@ class VotesListInfoResponse(BaseModel):
     create_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     end_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     participated: bool
+    image: str| None
 
     @staticmethod
     def from_vote_user(vote: Vote, user: User) -> "VotesListInfoResponse":
@@ -49,7 +50,8 @@ class VotesListInfoResponse(BaseModel):
             content=vote.content,
             create_datetime=vote.create_datetime,
             end_datetime=vote.end_datetime,
-            participated = participated
+            participated = participated,
+            image= vote.images[0].src if vote.images else None
         )
 
 class OnGoingVotesListResponse(BaseModel):
