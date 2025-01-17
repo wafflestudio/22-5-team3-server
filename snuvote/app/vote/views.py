@@ -46,8 +46,8 @@ def create_vote(
 @vote_router.get("/ongoing_list", status_code=HTTP_200_OK)
 def get_ongoing_list(
     user: Annotated[User, Depends(login_with_access_token)],
-    start_cursor: datetime|None,
-    vote_service: Annotated[VoteService, Depends()]
+    vote_service: Annotated[VoteService, Depends()],
+    start_cursor: datetime|None = None
 ):
     votes, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
     return OnGoingVotesListResponse(
