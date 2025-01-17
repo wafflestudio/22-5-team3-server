@@ -56,8 +56,30 @@ class VoteStore:
         return vote
     
     # 진행 중인 투표 리스트 조회
-    def get_ongoing_list(self) -> List[Vote]:
-        return self.session.execute(select(Vote).where(Vote.end_datetime > datetime.now(timezone.utc))).scalars().all()
+    def get_ongoing_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime|None]:
+
+        #커서가 none이면 가장 최신 것부터 40개
+        if start_cursor is None:
+            start_cursor = datetime.now(timezone.utc)
+
+        #생성 시간이 커서보다 최신인 것부터 오름차순(최신순)으로 40개 리턴
+        query = (
+            select(Vote)
+            .where(Vote.create_datetime < start_cursor)
+            .where(Vote.end_datetime > datetime.now(timezone.utc))
+            .order_by(Vote.create_datetime.desc())
+            .limit(40)
+        )
+
+        results = self.session.execute(query).scalars().all()
+
+        #만약 40개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
+        has_next = len(results) == 40
+        
+        #다음 커서는 40개 중 가장 과거에 생성된 것
+        next_cursor = results[-1].create_datetime if has_next else None
+        
+        return results, has_next, next_cursor
 
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:

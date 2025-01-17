@@ -55,7 +55,7 @@ class VotesListInfoResponse(BaseModel):
 class OnGoingVotesListResponse(BaseModel):
     votes_list: List[VotesListInfoResponse]
     has_next: bool
-    next_cursor: str|None = None
+    next_cursor: datetime|None = None
 
 class ChoiceDetailResponse(BaseModel):
     choice_id: int
