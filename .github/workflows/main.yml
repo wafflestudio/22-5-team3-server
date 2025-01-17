@@ -20,6 +20,7 @@ jobs:
         echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env.prod
         echo "DB_DATABASE=${{ secrets.DB_DATABASE }}" >> .env.prod
         echo "SECRET_FOR_JWT=${{ secrets.SECRET_FOR_JWT }}" >> .env.prod
+        echo "SERVER_IP=${{ secrets.SERVER_IP }}" >> .env.prod
         
     - name: Get Public IP
       id: ip
@@ -70,6 +71,7 @@ jobs:
           fi &&
           sudo docker run -d --name snuvote -p 8000:8000 \
           --env-file /home/${{ secrets.SERVER_USER }}/.env.prod \
+          --mount type=bind,source=/home/ubuntu/snuvote_images,target=/src/images \
           odumag99/snuvote:${{ env.VERSION }}"
           
     - name: Remove GitHub Actions IP

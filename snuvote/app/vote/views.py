@@ -1,6 +1,6 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Header
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from typing import Annotated, List
+from fastapi import APIRouter, Depends, File, UploadFile, Form
+from fastapi.security import HTTPBearer
 
 from pydantic.functional_validators import AfterValidator
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
@@ -21,13 +21,16 @@ security = HTTPBearer()
 
 #create vote
 @vote_router.post("/create", status_code=HTTP_201_CREATED)
-def create_vote(
+async def create_vote(
     user: Annotated[User, Depends(login_with_access_token)],
-    create_vote_request: CreateVoteRequest,
-    vote_service: Annotated[VoteService, Depends()]
+    vote_service: Annotated[VoteService, Depends()],
+    images: List[UploadFile]|None = File(None),
+    create_vote_json = Form(media_type="multipart/form-data", json_schema_extra=CreateVoteRequest.model_json_schema())
 ):
+    create_vote_request = CreateVoteRequest.model_validate_json(create_vote_json)
+
     
-    vote = vote_service.add_vote(
+    vote = await vote_service.add_vote(
         writer_id=user.id,
         title=create_vote_request.title,
         content=create_vote_request.content,
@@ -37,7 +40,8 @@ def create_vote(
         multiple_choice=create_vote_request.multiple_choice,
         annonymous_choice=create_vote_request.annonymous_choice,
         end_datetime=create_vote_request.end_datetime,
-        choices=create_vote_request.choices
+        choices=create_vote_request.choices,
+        images = images
     )
 
     return get_vote(vote.id, user, vote_service)
@@ -88,7 +92,8 @@ def get_vote(
         create_datetime = vote.create_datetime,
         end_datetime = vote.end_datetime,
         choices= [ChoiceDetailResponse.from_choice(choice, user, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices],
-        comments = [CommentDetailResponse.from_comment_user(comment, user) for comment in vote.comments if comment.is_deleted==False]
+        comments = [CommentDetailResponse.from_comment_user(comment, user) for comment in vote.comments if comment.is_deleted==False],
+        images = [image.src for image in vote.images]
     )
 
 
