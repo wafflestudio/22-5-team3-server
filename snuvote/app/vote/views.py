@@ -1,6 +1,6 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Header
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from typing import Annotated, List
+from fastapi import APIRouter, Depends, File, UploadFile, Form
+from fastapi.security import HTTPBearer
 
 from pydantic.functional_validators import AfterValidator
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
@@ -24,8 +24,7 @@ async def create_vote(
     user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()],
     images: List[UploadFile]|None = File(None),
-    create_vote_json = Form(media_type="multipart/form-data", json_schema_extra=CreateVoteRequest.model_json_schema()),
-    # files_inpath: List[UploadFile] = File(...)
+    create_vote_json = Form(media_type="multipart/form-data", json_schema_extra=CreateVoteRequest.model_json_schema())
 ):
     create_vote_request = CreateVoteRequest.model_validate_json(create_vote_json)
 
