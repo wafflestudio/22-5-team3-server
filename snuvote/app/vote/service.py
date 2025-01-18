@@ -18,15 +18,24 @@ class VoteService:
     
     def upload_vote_images(self, vote: Vote, images: List[UploadFile]) -> None:
         # voteimage를 저장하고 DB에 정보를 저장하는 함수
+
+        # S3 client 생성
         s3 = boto3.client('s3', aws_access_key_id=os.getenv('AWS_S3_ACCESS_KEY_ID'), aws_secret_access_key=os.getenv('AWS_S3_SECRET_ACCESS_KEY'))
 
-        image_order = 0
+        image_order = 0 # VoteImage.order에 저장될 이미지 순서 번호
+
         for image in images:
             image_order += 1
-            image_name = f'{secrets.token_urlsafe(16)}.{image.filename.split(".")[-1]}'
-            image_path = f'voteimages/{image_name}' # 임시로 도커 컨테이너 '/src/images'에 저장
+            image_name = f'{secrets.token_urlsafe(16)}.{image.filename.split(".")[-1]}' # 파일이름 = {랜덤문자열}.{확장자}
+            image_path = f'voteimages/{image_name}' # S3 버킷 내 파일 경로: voteimages/{파일이름}
+
+            # S3 버킷 해당 경로에 업로드
             s3.upload_fileobj(image.file, os.getenv('AWS_S3_BUCKET_NAME'), image_path)
+
+            # S3 버킷에 업로드된 이미지 경로
             image_src = f'https://{os.getenv("AWS_S3_BUCKET_NAME")}.s3.ap-northeast-2.amazonaws.com/{image_path}'
+
+            # VoteImage 테이블에 이미지 정보 저장
             self.vote_store.add_vote_image(vote_id=vote.id, image_order=image_order, image_src=image_src)
 
 
