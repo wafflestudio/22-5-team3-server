@@ -68,3 +68,8 @@ class CommentNotInThisVoteError(HTTPException):
 class InvalidFileExtensionError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_400_BAD_REQUEST, "Invalid file extension")
+
+
+class InvalidVoteListCategoryError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_400_BAD_REQUEST, "Invalid vote list category")
