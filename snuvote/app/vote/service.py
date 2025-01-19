@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 import secrets
 import os
 import boto3
+from botocore.config import Config
 
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif"}
@@ -23,7 +24,7 @@ class VoteService:
         # voteimage를 저장하고 DB에 정보를 저장하는 함수
 
         # S3 client 생성
-        s3 = boto3.client('s3', aws_access_key_id=os.getenv('AWS_S3_ACCESS_KEY_ID'), aws_secret_access_key=os.getenv('AWS_S3_SECRET_ACCESS_KEY'))
+        s3 = boto3.client('s3', aws_access_key_id=os.getenv('AWS_S3_ACCESS_KEY_ID'), aws_secret_access_key=os.getenv('AWS_S3_SECRET_ACCESS_KEY'), config=Config(region_name=os.getenv('AWS_DEFAULT_REGION')))
 
         image_order = 0 # VoteImage.order에 저장될 이미지 순서 번호
 
@@ -36,7 +37,7 @@ class VoteService:
             s3.upload_fileobj(image.file, os.getenv('AWS_S3_BUCKET_NAME'), image_path)
 
             # S3 버킷에 업로드된 이미지 경로
-            image_src = f'https://{os.getenv("AWS_S3_BUCKET_NAME")}.s3.ap-northeast-2.amazonaws.com/{image_path}'
+            image_src = f'https://{os.getenv("AWS_S3_BUCKET_NAME")}.s3.{os.getenv("AWS_DEFAULT_REGION")}.amazonaws.com/{image_path}'
 
             # VoteImage 테이블에 이미지 정보 저장
             self.vote_store.add_vote_image(vote_id=vote.id, image_order=image_order, image_src=image_src)
