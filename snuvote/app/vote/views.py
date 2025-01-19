@@ -21,7 +21,7 @@ security = HTTPBearer()
 
 #create vote
 @vote_router.post("/create", status_code=HTTP_201_CREATED)
-async def create_vote(
+def create_vote(
     user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()],
     images: List[UploadFile]|None = File(None),
@@ -30,7 +30,7 @@ async def create_vote(
     create_vote_request = CreateVoteRequest.model_validate_json(create_vote_json)
 
     
-    vote = await vote_service.add_vote(
+    vote = vote_service.add_vote(
         writer_id=user.id,
         title=create_vote_request.title,
         content=create_vote_request.content,
