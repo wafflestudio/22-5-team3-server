@@ -31,18 +31,26 @@ class VotesListInfoResponse(BaseModel):
     create_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     end_datetime: Annotated[datetime, AfterValidator(convert_utc_to_ktc_naive)] # UTC 시간대를 KST 시간대로 변환한 뒤 offset-naive로 변환
     participated: bool
+    participant_count: int
     image: str| None
 
     @staticmethod
     def from_vote_user(vote: Vote, user: User) -> "VotesListInfoResponse":
 
-        # 해당 유저의 참여 여부도 포함시켜야 함
+        # 해당 유저의 참여 여부, 전체 참여자 수 계산
         participated = False
+        participant_set = set()
         for choice in vote.choices:
             for choice_participation in choice.choice_participations:
+
+                #해당 유저가 참여했는지 여부
                 if choice_participation.user_id == user.id:
                     participated = True
-                    break
+                
+                #참여자를 집합에 넣기(중복 미포함)
+                participant_set.add(choice_participation.user_id)
+
+
 
         return VotesListInfoResponse(
             id=vote.id,
@@ -51,6 +59,7 @@ class VotesListInfoResponse(BaseModel):
             create_datetime=vote.create_datetime,
             end_datetime=vote.end_datetime,
             participated = participated,
+            participant_count= len(participant_set),
             image= vote.images[0].src if vote.images else None
         )
 
@@ -149,4 +158,17 @@ class VoteDetailResponse(BaseModel):
     choices: List[ChoiceDetailResponse]
     comments: List[CommentDetailResponse]
     images: List[str]
+    participant_count: int
+
+    #Vote를 받아 참여자 수를 계산함
+    @staticmethod
+    def from_vote(vote: Vote) -> int:
+
+        participant_set = set()
+        for choice in vote.choices:
+            for choice_participation in choice.choice_participations:                
+                #참여자를 집합에 넣기(중복 미포함)
+                participant_set.add(choice_participation.user_id)
+        
+        return len(participant_set)
 

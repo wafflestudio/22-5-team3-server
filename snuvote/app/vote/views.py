@@ -29,6 +29,7 @@ def create_vote(
     images: List[UploadFile]|None = File(None),
     create_vote_json = Form(media_type="multipart/form-data", json_schema_extra=CreateVoteRequest.model_json_schema())
 ):
+    #파일 확장자가 안맞으면 오류
     if images:
         for image in images:
             filename = image.filename
@@ -102,7 +103,8 @@ def get_vote(
         end_datetime = vote.end_datetime,
         choices= [ChoiceDetailResponse.from_choice(choice, user, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices],
         comments = [CommentDetailResponse.from_comment_user(comment, user) for comment in vote.comments if comment.is_deleted==False],
-        images = [image.src for image in vote.images]
+        images = [image.src for image in vote.images],
+        particiapant_count = VoteDetailResponse.from_vote(vote)
     )
 
 
