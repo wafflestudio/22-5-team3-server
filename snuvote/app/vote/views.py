@@ -7,7 +7,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZE
 
 from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest, CommentRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse, CommentDetailResponse
-from snuvote.app.vote.errors import VoteNotFoundError, ChoiceNotFoundError, CommentNotFoundError
+from snuvote.app.vote.errors import VoteNotFoundError, ChoiceNotFoundError, CommentNotFoundError, InvalidVoteListCategoryError
 from datetime import datetime, timedelta, timezone
 
 from snuvote.database.models import User
@@ -57,12 +57,28 @@ def get_ongoing_list(
 ):
     votes, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
     return OnGoingVotesListResponse(
-        votes_list = list([ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes]),
+        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes ],
         has_next = has_next,
         next_cursor = next_cursor
     )
 
+# 완료된 투표글 조회
+@vote_router.get("/list", status_code=HTTP_200_OK)
+def get_votes_list(
+    user: Annotated[User, Depends(login_with_access_token)],
+    vote_service: Annotated[VoteService, Depends()],
+    category: str,
+    start_cursor: datetime|None = None
+):
+    if category == "ended":
+        votes, has_next, next_cursor = vote_service.get_ended_votes_list(start_cursor)
+    else: raise InvalidVoteListCategoryError()
 
+    return OnGoingVotesListResponse(
+        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes ],
+        has_next = has_next,
+        next_cursor = next_cursor
+    )
 
 # 특정 투표글 정보 조회
 @vote_router.get("/{vote_id}", status_code=HTTP_200_OK)
