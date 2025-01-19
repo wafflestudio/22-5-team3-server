@@ -82,7 +82,7 @@ class VoteStore:
 
         results = self.session.execute(query).scalars().all()
 
-        #만약 40개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
+        #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
         
         #다음 커서는 self.pagination_size개 중 가장 과거에 생성된 것
@@ -93,7 +93,7 @@ class VoteStore:
     # 완료된 투표글 리스트 조회
     def get_ended_votes_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime|None]:
 
-        # 커서가 none이면 가장 최근에 끝난 투표부터 self.pagination_size개
+        # 커서가 none이면 가장 최근에 끝난 투표부터 최근에 끝난 순으로 self.pagination_size개
         if start_cursor is None:
             query = (
                 select(Vote)
@@ -101,7 +101,7 @@ class VoteStore:
                 .order_by(Vote.end_datetime.desc())
                 .limit(self.pagination_size)
             )
-        else: # 커서가 None이 아니면 커서보다 과거에 끝난 투표부터 오래 전 끝난 투표부터 최근에 끝난 투표순으로 self.pagination_size개
+        else: # 커서가 None이 아니면 커서보다 과거에 끝난 투표부터 최근에 끝난 순으로 self.pagination_size개
             query = (
                 select(Vote)
                 .where(Vote.end_datetime <= datetime.now(timezone.utc))
@@ -112,7 +112,7 @@ class VoteStore:
 
         results = self.session.execute(query).scalars().all()
 
-        # 만약 40개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
+        # 만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
         
         # 다음 커서는 self.pagination_size개 중 가장 과거에 완료된 것
