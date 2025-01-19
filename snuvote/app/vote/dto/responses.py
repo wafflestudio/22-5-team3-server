@@ -162,7 +162,7 @@ class VoteDetailResponse(BaseModel):
 
     #Vote를 받아 참여자 수를 계산함
     @staticmethod
-    def from_vote(vote: Vote) -> int:
+    def get_participant_count_from_vote(vote: Vote) -> int:
 
         participant_set = set()
         for choice in vote.choices:
