@@ -7,7 +7,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZE
 
 from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest, CommentRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse, CommentDetailResponse
-from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError, ChoiceNotFoundError, CommentNotFoundError
+from snuvote.app.vote.errors import VoteNotFoundError, InvalidFileExtensionError, ChoiceNotFoundError, CommentNotFoundError
 from datetime import datetime, timedelta, timezone
 
 from snuvote.database.models import User
@@ -19,6 +19,8 @@ vote_router = APIRouter()
 
 security = HTTPBearer()
 
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
 #create vote
 @vote_router.post("/create", status_code=HTTP_201_CREATED)
 def create_vote(
@@ -27,6 +29,13 @@ def create_vote(
     images: List[UploadFile]|None = File(None),
     create_vote_json = Form(media_type="multipart/form-data", json_schema_extra=CreateVoteRequest.model_json_schema())
 ):
+    if images:
+        for image in images:
+            filename = image.filename
+            extension = filename.split(".")[-1].lower()  # 확장자 추출 및 소문자로 변환
+            if extension not in ALLOWED_EXTENSIONS:
+                raise InvalidFileExtensionError
+
     create_vote_request = CreateVoteRequest.model_validate_json(create_vote_json)
 
     

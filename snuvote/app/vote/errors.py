@@ -64,3 +64,7 @@ class CommentNotYoursError(HTTPException):
 class CommentNotInThisVoteError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_404_NOT_FOUND, "Comment not in this vote")
+
+class InvalidFileExtensionError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_400_BAD_REQUEST, "Invalid file extension")
