@@ -3,7 +3,7 @@ from typing import Annotated, List
 from fastapi import Depends, UploadFile 
 from snuvote.database.models import Vote, User, Choice, ChoiceParticipation, Comment
 from snuvote.app.vote.store import VoteStore
-from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError, CommentNotYoursError, CommentNotInThisVoteError
+from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError, CommentNotYoursError, CommentNotInThisVoteError, InvalidFileExtensionError
 from snuvote.app.vote.dto.requests import ParticipateVoteRequest, CommentRequest
 
 from datetime import datetime, timedelta, timezone
@@ -11,6 +11,9 @@ from datetime import datetime, timedelta, timezone
 import secrets
 import os
 import boto3
+
+
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif"}
 
 class VoteService:
     def __init__(self, vote_store: Annotated[VoteStore, Depends()]) -> None:
@@ -71,6 +74,12 @@ class VoteService:
         
         # 이미지 업로드
         if images:
+            # 확장자가 안 맞으면 오류
+            for image in images:
+                filename = image.filename
+                extension = filename.split(".")[-1].lower()  # 확장자 추출 및 소문자로 변환
+                if extension not in ALLOWED_EXTENSIONS:
+                    raise InvalidFileExtensionError
             self.upload_vote_images(vote, images)
 
         return self.vote_store.get_vote_by_vote_id(vote_id=vote.id)

@@ -7,7 +7,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZE
 
 from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest, CommentRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse, CommentDetailResponse
-from snuvote.app.vote.errors import VoteNotFoundError, MultipleChoicesError, ChoiceNotFoundError, CommentNotFoundError
+from snuvote.app.vote.errors import VoteNotFoundError, ChoiceNotFoundError, CommentNotFoundError
 from datetime import datetime, timedelta, timezone
 
 from snuvote.database.models import User
@@ -19,6 +19,7 @@ vote_router = APIRouter()
 
 security = HTTPBearer()
 
+
 #create vote
 @vote_router.post("/create", status_code=HTTP_201_CREATED)
 def create_vote(
@@ -27,6 +28,7 @@ def create_vote(
     images: List[UploadFile]|None = File(None),
     create_vote_json = Form(media_type="multipart/form-data", json_schema_extra=CreateVoteRequest.model_json_schema())
 ):
+    
     create_vote_request = CreateVoteRequest.model_validate_json(create_vote_json)
 
     
@@ -93,7 +95,8 @@ def get_vote(
         end_datetime = vote.end_datetime,
         choices= [ChoiceDetailResponse.from_choice(choice, user, vote.annonymous_choice, vote.realtime_result) for choice in vote.choices],
         comments = [CommentDetailResponse.from_comment_user(comment, user) for comment in vote.comments if comment.is_deleted==False],
-        images = [image.src for image in vote.images]
+        images = [image.src for image in vote.images],
+        participant_count = VoteDetailResponse.get_participant_count_from_vote(vote)
     )
 
 
