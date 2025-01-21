@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from snuvote.app.user.dto.requests import UserSignupRequest, UserSigninRequest
-from snuvote.app.user.dto.responses import UserSigninResponse
+from snuvote.app.user.dto.responses import UserSigninResponse, UserInfoResponse
 from snuvote.database.models import User
 from snuvote.app.user.service import UserService
 from snuvote.app.user.errors import InvalidTokenError, UserNotFoundError
@@ -57,3 +57,10 @@ def refresh(
     refresh_token = credentials.credentials
     access_token, refresh_token = user_service.reissue_tokens(refresh_token)
     return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)
+
+# get_me
+@user_router.get("/me", status_code=HTTP_200_OK)
+def get_me(
+    user: Annotated[User, Depends(login_with_access_token)]
+):
+    return UserInfoResponse.from_user(user)
