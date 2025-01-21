@@ -74,15 +74,15 @@ def get_votes_list(
     start_cursor: datetime|None = None
 ):
     if category == "ended":
-        votes, has_next, next_cursor = vote_service.get_ended_votes_list(start_cursor)
+        results, has_next, next_cursor = vote_service.get_ended_votes_list(start_cursor)
     elif category == "ongoing":
-        votes, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
+        results, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
     elif category == "hot":
-        votes, has_next, next_cursor = vote_service.get_hot_votes_list(start_cursor)
+        results, has_next, next_cursor = vote_service.get_hot_votes_list(start_cursor)
     else: raise InvalidVoteListCategoryError()
 
     return OnGoingVotesListResponse(
-        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes ],
+        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user, participant_count) for vote, participant_count in results ],
         has_next = has_next,
         next_cursor = next_cursor
     )

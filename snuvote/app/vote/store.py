@@ -66,63 +66,100 @@ class VoteStore:
         self.session.flush()
 
     # 진행 중인 투표 리스트 조회
-    def get_ongoing_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime|None]:
+    def get_ongoing_list(self, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
             start_cursor = datetime.now(timezone.utc)
 
         #생성 시간이 커서보다 최신인 것부터 오름차순(최신순)으로 self.pagination_size개 리턴
-        query = (
-            select(Vote)
+        # 먼저 필요한 Vote만 필터링
+        filtered_votes = (
+            select(Vote.id)
             .where(Vote.create_datetime < start_cursor)
             .where(Vote.end_datetime > datetime.now(timezone.utc))
+            .subquery()
+        )
+
+        #서브 쿼리
+        subquery = (
+            select(
+                Choice.vote_id.label("vote_id"),
+                func.count(func.distinct(ChoiceParticipation.user_id)).label("participant_count")
+            )
+            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id)
+            .where(Choice.vote_id.in_(select(filtered_votes.c.id)))  # 필요한 투표만 선택
+            .group_by(Choice.vote_id)
+            .subquery()
+        )
+
+        #메인 쿼리
+        query = (
+            select(Vote, subquery.c.participant_count)
+            .join(subquery, Vote.id == subquery.c.vote_id)
             .order_by(Vote.create_datetime.desc())
             .limit(self.pagination_size)
         )
 
-        results = self.session.execute(query).scalars().all()
+        results = self.session.execute(query).all()
 
         #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
         
         #다음 커서는 self.pagination_size개 중 가장 과거에 생성된 것
-        next_cursor = results[-1].create_datetime if has_next else None
+        next_cursor = results[-1][0].create_datetime if has_next else None
         
         return results, has_next, next_cursor
 
     # 완료된 투표글 리스트 조회
-    def get_ended_votes_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime|None]:
+    def get_ended_votes_list(self, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
 
         # 커서가 none이면 가장 최근에 끝난 투표부터 최근에 끝난 순으로 self.pagination_size개
         if start_cursor is None:
-            query = (
-                select(Vote)
+            filtered_votes = (
+                select(Vote.id)
                 .where(Vote.end_datetime <= datetime.now(timezone.utc))
-                .order_by(Vote.end_datetime.desc())
-                .limit(self.pagination_size)
+                .subquery()
             )
         else: # 커서가 None이 아니면 커서보다 과거에 끝난 투표부터 최근에 끝난 순으로 self.pagination_size개
-            query = (
-                select(Vote)
+            filtered_votes = (
+                select(Vote.id)
                 .where(Vote.end_datetime <= datetime.now(timezone.utc))
                 .where(Vote.end_datetime < start_cursor)
-                .order_by(Vote.end_datetime.desc())
-                .limit(self.pagination_size)
+                .subquery()
             )
+        
+        #서브 쿼리
+        subquery = (
+            select(
+                Choice.vote_id.label("vote_id"),
+                func.count(func.distinct(ChoiceParticipation.user_id)).label("participant_count")
+            )
+            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id)
+            .where(Choice.vote_id.in_(select(filtered_votes.c.id)))  # 필요한 투표만 선택
+            .group_by(Choice.vote_id)
+            .subquery()
+        )
+        #메인 쿼리
+        query = (
+            select(Vote, subquery.c.participant_count)
+            .join(subquery, Vote.id == subquery.c.vote_id)
+            .order_by(Vote.end_datetime.desc())
+            .limit(self.pagination_size)
+        )
 
-        results = self.session.execute(query).scalars().all()
+        results = self.session.execute(query).all()
 
         # 만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
         
         # 다음 커서는 self.pagination_size개 중 가장 과거에 완료된 것
-        next_cursor = results[-1].end_datetime if has_next else None
+        next_cursor = results[-1][0].end_datetime if has_next else None
         
         return results, has_next, next_cursor
 
 
-    def get_hot_votes_list(self, start_cursor:datetime|None) ->  tuple[List[Vote], bool, datetime|None]:
+    def get_hot_votes_list(self, start_cursor:datetime|None) ->  tuple[List[tuple[Vote,int]], bool, datetime|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
@@ -151,21 +188,21 @@ class VoteStore:
 
         #메인 쿼리
         query = (
-            select(Vote)
+            select(Vote, subquery.c.participant_count)
             .join(subquery, Vote.id == subquery.c.vote_id)
-            .where(subquery.c.participant_count >= 10)  # 참여자 수 10명 이상 조건
+            .where(subquery.c.participant_count >= 5)  # 참여자 수 5명 이상 조건
             .order_by(Vote.create_datetime.desc())
             .limit(self.pagination_size)
         )
 
         # results : 투표 리스트
-        results = self.session.execute(query).scalars().all()
+        results = self.session.execute(query).all()
 
         #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
         
         #다음 커서는 self.pagination_size개 중 가장 과거에 생성된 것
-        next_cursor = results[-1].create_datetime if has_next else None
+        next_cursor = results[-1][0].create_datetime if has_next else None
         
         return results, has_next, next_cursor
 

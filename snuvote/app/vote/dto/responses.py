@@ -35,20 +35,17 @@ class VotesListInfoResponse(BaseModel):
     image: str| None
 
     @staticmethod
-    def from_vote_user(vote: Vote, user: User) -> "VotesListInfoResponse":
+    def from_vote_user(vote: Vote, user: User, participant_count: int) -> "VotesListInfoResponse":
 
-        # 해당 유저의 참여 여부, 전체 참여자 수 계산
+        # 해당 유저의 참여 여부
         participated = False
-        participant_set = set()
         for choice in vote.choices:
             for choice_participation in choice.choice_participations:
 
                 #해당 유저가 참여했는지 여부
                 if choice_participation.user_id == user.id:
                     participated = True
-                
-                #참여자를 집합에 넣기(중복 미포함)
-                participant_set.add(choice_participation.user_id)
+                    break
 
 
 
@@ -59,7 +56,7 @@ class VotesListInfoResponse(BaseModel):
             create_datetime=vote.create_datetime,
             end_datetime=vote.end_datetime,
             participated = participated,
-            participant_count= len(participant_set),
+            participant_count= participant_count,
             image= vote.images[0].src if vote.images else None
         )
 
