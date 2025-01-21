@@ -49,6 +49,8 @@ def create_vote(
     return get_vote(vote.id, user, vote_service)
 
 # 진행 중인 투표 리스트 조회
+#아직 프론트에서 list API 변경이 안되어서 남겨둠
+#함수는 지울 예정
 @vote_router.get("/ongoing_list", status_code=HTTP_200_OK)
 def get_ongoing_list(
     user: Annotated[User, Depends(login_with_access_token)],
@@ -62,7 +64,8 @@ def get_ongoing_list(
         next_cursor = next_cursor
     )
 
-# 완료된 투표글 조회
+
+# 완료된/진행중인/hot 투표글 조회
 @vote_router.get("/list", status_code=HTTP_200_OK)
 def get_votes_list(
     user: Annotated[User, Depends(login_with_access_token)],
@@ -72,6 +75,10 @@ def get_votes_list(
 ):
     if category == "ended":
         votes, has_next, next_cursor = vote_service.get_ended_votes_list(start_cursor)
+    elif category == "ongoing":
+        votes, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
+    elif category == "hot":
+        votes, has_next, next_cursor = vote_service.get_hot_votes_list(start_cursor)
     else: raise InvalidVoteListCategoryError()
 
     return OnGoingVotesListResponse(

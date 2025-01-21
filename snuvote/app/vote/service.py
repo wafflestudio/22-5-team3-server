@@ -94,6 +94,10 @@ class VoteService:
     def get_ended_votes_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime|None]:
         return self.vote_store.get_ended_votes_list(start_cursor)
     
+    # HOT 투표글 리스트 조회
+    def get_hot_votes_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime|None]:
+        return self.vote_store.get_hot_votes_list(start_cursor)
+    
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
         return self.vote_store.get_vote_by_vote_id(vote_id=vote_id)
