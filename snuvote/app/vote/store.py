@@ -87,7 +87,7 @@ class VoteStore:
                 Choice.vote_id.label("vote_id"),
                 func.count(func.distinct(ChoiceParticipation.user_id)).label("participant_count")
             )
-            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id)
+            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id, isouter=True) # left outer
             .where(Choice.vote_id.in_(select(filtered_votes.c.id)))  # 필요한 투표만 선택
             .group_by(Choice.vote_id)
             .subquery()
@@ -96,7 +96,7 @@ class VoteStore:
         #메인 쿼리
         query = (
             select(Vote, subquery.c.participant_count)
-            .join(subquery, Vote.id == subquery.c.vote_id)
+            .join(subquery, Vote.id == subquery.c.vote_id, isouter=True) # left outer
             .order_by(Vote.create_datetime.desc())
             .limit(self.pagination_size)
         )
@@ -135,7 +135,7 @@ class VoteStore:
                 Choice.vote_id.label("vote_id"),
                 func.count(func.distinct(ChoiceParticipation.user_id)).label("participant_count")
             )
-            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id)
+            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id, isouter=True) # left outer
             .where(Choice.vote_id.in_(select(filtered_votes.c.id)))  # 필요한 투표만 선택
             .group_by(Choice.vote_id)
             .subquery()
@@ -143,7 +143,7 @@ class VoteStore:
         #메인 쿼리
         query = (
             select(Vote, subquery.c.participant_count)
-            .join(subquery, Vote.id == subquery.c.vote_id)
+            .join(subquery, Vote.id == subquery.c.vote_id, isouter=True) # left outer
             .order_by(Vote.end_datetime.desc())
             .limit(self.pagination_size)
         )
