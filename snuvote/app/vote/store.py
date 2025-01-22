@@ -72,8 +72,8 @@ class VoteStore:
         if start_cursor is None:
             start_cursor = datetime.now(timezone.utc)
 
-        #생성 시간이 커서보다 최신인 것부터 오름차순(최신순)으로 self.pagination_size개 리턴
-        # 먼저 필요한 Vote만 필터링
+        # 생성 시간이 커서보다 최신인 것부터 오름차순(최신순)으로 self.pagination_size개 리턴
+        # 먼저 진행 중인 투표글의 Vote.id만 반환
         filtered_votes = (
             select(Vote.id)
             .where(Vote.create_datetime < start_cursor)
@@ -81,22 +81,22 @@ class VoteStore:
             .subquery()
         )
 
-        #서브 쿼리
+        # 현재 진행 중인 투표글 vote.id(filtered_votes)별 참여자 수를 구하는 서브 쿼리
         subquery = (
             select(
                 Choice.vote_id.label("vote_id"),
                 func.count(func.distinct(ChoiceParticipation.user_id)).label("participant_count")
             )
-            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id, isouter=True) # left outer
+            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id, isouter=True) # 참여가 없는 투표의 경우도 참여자 수는 반환되어야 하므로 left outer join
             .where(Choice.vote_id.in_(select(filtered_votes.c.id)))  # 필요한 투표만 선택
             .group_by(Choice.vote_id)
             .subquery()
         )
 
-        #메인 쿼리
+        # 메인 쿼리: 현재 진행 중인 투표글들만 Vote 정보 + 참여자 수 inner join
         query = (
             select(Vote, subquery.c.participant_count)
-            .join(subquery, Vote.id == subquery.c.vote_id)
+            .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
             .order_by(Vote.create_datetime.desc())
             .limit(self.pagination_size)
         )
@@ -114,6 +114,7 @@ class VoteStore:
     # 완료된 투표글 리스트 조회
     def get_ended_votes_list(self, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
 
+        # 필터 쿼리: 완료된 투표글의 Vote.id만 반환
         # 커서가 none이면 가장 최근에 끝난 투표부터 최근에 끝난 순으로 self.pagination_size개
         if start_cursor is None:
             filtered_votes = (
@@ -129,21 +130,22 @@ class VoteStore:
                 .subquery()
             )
         
-        #서브 쿼리
+        #서브 쿼리: filtered_votes의 vote_id별 참가자 수를 구하는 서브 쿼리
         subquery = (
             select(
                 Choice.vote_id.label("vote_id"),
                 func.count(func.distinct(ChoiceParticipation.user_id)).label("participant_count")
             )
-            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id, isouter=True) # left outer
+            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id, isouter=True) # 참여가 없는 투표의 경우도 참여자 수는 반환되어야 하므로 left outer join
             .where(Choice.vote_id.in_(select(filtered_votes.c.id)))  # 필요한 투표만 선택
             .group_by(Choice.vote_id)
             .subquery()
         )
-        #메인 쿼리
+
+        # 메인 쿼리: 완료된 투표글들만 Vote 정보 + 참여자 수 inner join
         query = (
             select(Vote, subquery.c.participant_count)
-            .join(subquery, Vote.id == subquery.c.vote_id)
+            .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
             .order_by(Vote.end_datetime.desc())
             .limit(self.pagination_size)
         )
