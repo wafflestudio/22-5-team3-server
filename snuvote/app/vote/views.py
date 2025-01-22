@@ -57,9 +57,9 @@ def get_ongoing_list(
     vote_service: Annotated[VoteService, Depends()],
     start_cursor: datetime|None = None
 ):
-    votes, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
+    results, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
     return OnGoingVotesListResponse(
-        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user) for vote in votes ],
+        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user, participant_count) for vote, participant_count in results ],
         has_next = has_next,
         next_cursor = next_cursor
     )
