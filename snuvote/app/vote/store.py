@@ -96,7 +96,7 @@ class VoteStore:
         #메인 쿼리
         query = (
             select(Vote, subquery.c.participant_count)
-            .join(subquery, Vote.id == subquery.c.vote_id, isouter=True) # left outer
+            .join(subquery, Vote.id == subquery.c.vote_id)
             .order_by(Vote.create_datetime.desc())
             .limit(self.pagination_size)
         )
@@ -143,7 +143,7 @@ class VoteStore:
         #메인 쿼리
         query = (
             select(Vote, subquery.c.participant_count)
-            .join(subquery, Vote.id == subquery.c.vote_id, isouter=True) # left outer
+            .join(subquery, Vote.id == subquery.c.vote_id)
             .order_by(Vote.end_datetime.desc())
             .limit(self.pagination_size)
         )
