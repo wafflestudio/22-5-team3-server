@@ -87,12 +87,16 @@ class VoteService:
 
 
     # 진행 중인 투표 리스트 조회
-    def get_ongoing_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime|None]:
+    def get_ongoing_list(self, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
         return self.vote_store.get_ongoing_list(start_cursor)
     
     # 완료된 투표글 리스트 조회
-    def get_ended_votes_list(self, start_cursor: datetime|None) -> tuple[List[Vote], bool, datetime|None]:
+    def get_ended_votes_list(self, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
         return self.vote_store.get_ended_votes_list(start_cursor)
+    
+    # HOT 투표글 리스트 조회
+    def get_hot_votes_list(self, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
+        return self.vote_store.get_hot_votes_list(start_cursor)
     
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
