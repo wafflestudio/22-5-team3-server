@@ -28,7 +28,7 @@ class UserService:
     #회원가입
     def add_user(self, userid: str, password: str, email: str, name: str, college: int) -> User:
         hashed_password = self.hash_password(password)
-        return self.user_store.add_user(userid=userid, password=hashed_password, email=email, name=name, college=college)
+        return self.user_store.add_user(userid=userid, hashed_password=hashed_password, email=email, name=name, college=college)
 
     #아이디로 유저 찾기
     def get_user_by_userid(self, userid: str) -> User | None:
@@ -71,7 +71,7 @@ class UserService:
     #처음 로그인
     def signin(self, userid: str, password: str) -> tuple[str, str]:
         user = self.get_user_by_userid(userid)
-        if user is None or not self.verify_password(password, user.password):
+        if user is None or not self.verify_password(password, user.hashed_password):
             raise InvalidUsernameOrPasswordError()
         return self.issue_tokens(userid)
     
@@ -139,10 +139,10 @@ class UserService:
     def reset_password(self, user:User, current_password:str, new_password:str) -> None:
 
         #현재 비밀번호를 틀린 경우
-        if not self.verify_password(current_password, user.password):
+        if not self.verify_password(current_password, user.hashed_password):
             raise InvalidPasswordError()
         
         #새 비밀번호 해싱하기
         hashed_new_password = self.hash_password(new_password)        
-        return self.user_store.reset_password(user_id=user.id, new_password=hashed_new_password)
+        return self.user_store.reset_password(userid=user.userid, new_password=hashed_new_password)
         

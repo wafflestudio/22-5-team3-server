@@ -15,14 +15,14 @@ class UserStore:
         self.session = session
 
     #회원가입하기
-    def add_user(self, userid: str, password: str, email: str, name: str, college: int) -> User:
+    def add_user(self, userid: str, hashed_password: str, email: str, name: str, college: int) -> User:
         if self.get_user_by_userid(userid):
             raise UserIdAlreadyExistsError()
 
         if self.get_user_by_email(email):
             raise EmailAlreadyExistsError()
 
-        user = User(userid=userid, password=password, email=email, name=name, college=college)
+        user = User(userid=userid, hashed_password=hashed_password, email=email, name=name, college=college)
         self.session.add(user)
         self.session.flush()
 
@@ -52,7 +52,8 @@ class UserStore:
         )
     
     #비밀번호 변경하기
-    def reset_password(self, user_id:int, new_password:str) -> None:
-        user = self.get_user_by_userid(user_id)
-        user.password = new_password
+    def reset_password(self, userid:str, new_password:str) -> None:
+        user = self.get_user_by_userid(userid)
+        print(userid, user)
+        user.hashed_password = new_password
         self.session.flush()
