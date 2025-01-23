@@ -51,6 +51,7 @@ class UserStore:
             is not None
         )
     
+    #비밀번호 변경하기
     def reset_password(self, user_id:int, new_password:str) -> None:
         user = self.get_user_by_userid(user_id)
         user.password = new_password
