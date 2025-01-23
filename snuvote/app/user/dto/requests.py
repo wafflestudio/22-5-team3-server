@@ -57,4 +57,3 @@ class UserSigninRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     current_password: str
     new_password: Annotated[str, AfterValidator(validate_password)]
-    confirm_new_password: str

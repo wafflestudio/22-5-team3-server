@@ -74,7 +74,7 @@ def reset_password(
 ):
     
     user_service.reset_password(
-        user, reset_password_request.current_password, reset_password_request.new_password, reset_password_request.confirm_new_password
+        user, reset_password_request.current_password, reset_password_request.new_password
     )
 
     return "Success"
