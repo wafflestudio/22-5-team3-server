@@ -24,7 +24,7 @@ class UserStore:
 
         user = User(userid=userid, password=password, email=email, name=name, college=college)
         self.session.add(user)
-        self.session.commit()
+        self.session.flush()
 
         return user
 
@@ -40,7 +40,7 @@ class UserStore:
     def block_refresh_token(self, token_id: str, expires_at: datetime) -> None:
         blocked_refresh_token = BlockedRefreshToken(token_id=token_id, expires_at=expires_at)
         self.session.add(blocked_refresh_token)
-        self.session.commit()
+        self.session.flush()
 
     #리프레쉬토큰 만료 체크하기
     def is_refresh_token_blocked(self, token_id: int) -> bool:
@@ -55,4 +55,4 @@ class UserStore:
     def reset_password(self, user_id:int, new_password:str) -> None:
         user = self.get_user_by_userid(user_id)
         user.password = new_password
-        self.session.commit()
+        self.session.flush()
