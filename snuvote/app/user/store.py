@@ -4,7 +4,7 @@ from datetime import datetime
 
 from fastapi import Depends
 from snuvote.app.user.errors import EmailAlreadyExistsError, UserUnsignedError, UserIdAlreadyExistsError
-from snuvote.database.models import User, BlockedRefreshToken
+from snuvote.database.models import User, BlockedRefreshToken, NaverUser
 
 from snuvote.database.connection import get_db_session
 from sqlalchemy import select, delete
@@ -56,4 +56,11 @@ class UserStore:
         user = self.get_user_by_userid(userid)
         print(userid, user)
         user.hashed_password = new_password
+        self.session.flush()
+
+    # 네이버 고유 식별 id 등록
+    def link_with_naver(self, userid: str, naver_id: str):
+        user = self.get_user_by_userid(userid)
+        new_naveruser = NaverUser(id=user.id, naver_id=naver_id)
+        self.session.add(new_naveruser)
         self.session.flush()

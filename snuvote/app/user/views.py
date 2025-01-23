@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Body
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from snuvote.app.user.dto.requests import UserSignupRequest, UserSigninRequest, ResetPasswordRequest
@@ -76,5 +76,16 @@ def reset_password(
     user_service.reset_password(
         user, reset_password_request.current_password, reset_password_request.new_password
     )
+
+    return "Success"
+
+# 네이버 계정과 연동
+@user_router.post("/link/naver", status_code=HTTP_200_OK)
+async def link_with_naver(
+    user: Annotated[User, Depends(login_with_access_token)],
+    user_service: Annotated[UserService, Depends()],
+    access_token: Annotated[str, Body(...)]  
+):
+    await user_service.link_with_naver(user, access_token)
 
     return "Success"
