@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, InvalidConfirmPasswordError
 
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -11,6 +11,7 @@ from enum import Enum
 from uuid import uuid4
 from dotenv import load_dotenv
 import os
+import bcrypt
 
 load_dotenv(dotenv_path = '.env.prod')
 SECRET = os.getenv("SECRET_FOR_JWT") # .env.prod에서 불러오기
@@ -26,11 +27,28 @@ class UserService:
     
     #회원가입
     def add_user(self, userid: str, password: str, email: str, name: str, college: int) -> User:
-        return self.user_store.add_user(userid=userid, password=password, email=email, name=name, college=college)
+        hashed_password = self.hash_password(password)
+        return self.user_store.add_user(userid=userid, hashed_password=hashed_password, email=email, name=name, college=college)
 
     #아이디로 유저 찾기
     def get_user_by_userid(self, userid: str) -> User | None:
         return self.user_store.get_user_by_userid(userid)
+    
+    #비밀번호 해싱하기
+    def hash_password(self, password:str) -> str:
+        # 비밀번호를 바이트로 변환
+        password_bytes = password.encode('utf-8')
+        # 솔트 생성 및 해싱
+        hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+        #바이트를 다시 문자열로 변환
+        return hashed_password.decode('utf-8')
+    
+    #비밀번호 검증하기
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        # 저장된 해시를 바이트로 변환
+        hashed_password_bytes = hashed_password.encode('utf-8')
+        # 입력된 비밀번호와 비교
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password_bytes)
     
     #토큰 생성
     def issue_tokens(self, userid: str) -> tuple[str, str]:
@@ -53,7 +71,7 @@ class UserService:
     #처음 로그인
     def signin(self, userid: str, password: str) -> tuple[str, str]:
         user = self.get_user_by_userid(userid)
-        if user is None or user.password != password:
+        if user is None or not self.verify_password(password, user.hashed_password):
             raise InvalidUsernameOrPasswordError()
         return self.issue_tokens(userid)
     
@@ -115,3 +133,16 @@ class UserService:
         userid = self.validate_refresh_token(refresh_token)
         self.block_refresh_token(refresh_token)
         return self.issue_tokens(userid)
+    
+
+    #비밀번호 변경
+    def reset_password(self, user:User, current_password:str, new_password:str) -> None:
+
+        #현재 비밀번호를 틀린 경우
+        if not self.verify_password(current_password, user.hashed_password):
+            raise InvalidPasswordError()
+        
+        #새 비밀번호 해싱하기
+        hashed_new_password = self.hash_password(new_password)        
+        return self.user_store.reset_password(userid=user.userid, new_password=hashed_new_password)
+        

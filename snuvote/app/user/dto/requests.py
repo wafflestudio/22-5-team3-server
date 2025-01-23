@@ -53,3 +53,7 @@ class UserSignupRequest(BaseModel):
 class UserSigninRequest(BaseModel):
     userid: str
     password: str
+
+class ResetPasswordRequest(BaseModel):
+    current_password: str
+    new_password: Annotated[str, AfterValidator(validate_password)]

@@ -59,3 +59,11 @@ class ExpiredTokenError(HTTPException):
 class BlockedRefreshTokenError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "Blocked refresh token")
+
+class InvalidPasswordError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Invalid password")
+
+class InvalidConfirmPasswordError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_400_BAD_REQUEST, "Invalid confirm password")

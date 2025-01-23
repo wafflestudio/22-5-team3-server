@@ -14,7 +14,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     userid: Mapped[str] = mapped_column(String(20), unique=True, index=True)
     email: Mapped[str] = mapped_column(String(100), unique=True, index=True)
-    password: Mapped[str] = mapped_column(String(20))
+    hashed_password: Mapped[str] = mapped_column(String(60))
     name: Mapped[str] = mapped_column(String(20))
     college: Mapped[int] = mapped_column(Integer)
 

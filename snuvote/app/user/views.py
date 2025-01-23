@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
-from snuvote.app.user.dto.requests import UserSignupRequest, UserSigninRequest
+from snuvote.app.user.dto.requests import UserSignupRequest, UserSigninRequest, ResetPasswordRequest
 from snuvote.app.user.dto.responses import UserSigninResponse, UserInfoResponse
 from snuvote.database.models import User
 from snuvote.app.user.service import UserService
@@ -64,3 +64,17 @@ def get_me(
     user: Annotated[User, Depends(login_with_access_token)]
 ):
     return UserInfoResponse.from_user(user)
+
+#비밀번호 변경하기
+@user_router.patch("/reset_pw", status_code=HTTP_200_OK)
+def reset_password(
+    user: Annotated[User, Depends(login_with_access_token)],
+    reset_password_request: ResetPasswordRequest,
+    user_service: Annotated[UserService, Depends()]
+):
+    
+    user_service.reset_password(
+        user, reset_password_request.current_password, reset_password_request.new_password
+    )
+
+    return "Success"
