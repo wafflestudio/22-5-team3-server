@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, InvalidConfirmPasswordError
 
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -115,3 +115,18 @@ class UserService:
         userid = self.validate_refresh_token(refresh_token)
         self.block_refresh_token(refresh_token)
         return self.issue_tokens(userid)
+    
+
+    #비밀번호 변경
+    def reset_password(self, user:User, current_password:str, new_password:str, confirm_new_password:str) -> None:
+
+        #현재 비밀번호를 틀린 경우
+        if user.password != current_password:
+            raise InvalidPasswordError()
+        
+        #새로운 비밀번호와 확인 비밀번호가 다른 경우
+        if new_password != confirm_new_password:
+            raise InvalidConfirmPasswordError()
+        
+        return self.user_store.reset_password(user_id=user.id, new_password=new_password)
+        
