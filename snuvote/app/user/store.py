@@ -3,8 +3,8 @@ from typing import Annotated
 from datetime import datetime
 
 from fastapi import Depends
-from snuvote.app.user.errors import EmailAlreadyExistsError, UserUnsignedError, UserIdAlreadyExistsError
-from snuvote.database.models import User, BlockedRefreshToken
+from snuvote.app.user.errors import EmailAlreadyExistsError, UserIdAlreadyExistsError, NotLinkedNaverAccountError, UserNotFoundError
+from snuvote.database.models import User, BlockedRefreshToken, NaverUser
 
 from snuvote.database.connection import get_db_session
 from sqlalchemy import select, delete
@@ -54,6 +54,23 @@ class UserStore:
     #비밀번호 변경하기
     def reset_password(self, userid:str, new_password:str) -> None:
         user = self.get_user_by_userid(userid)
-        print(userid, user)
         user.hashed_password = new_password
         self.session.flush()
+
+    # 네이버 고유 식별 id 등록
+    def link_with_naver(self, userid: str, naver_id: str):
+        user = self.get_user_by_userid(userid)
+        new_naveruser = NaverUser(user_id=user.id, naver_id=naver_id)
+        self.session.add(new_naveruser)
+        self.session.flush()
+
+    def get_user_by_naver_id(self, naver_id: str) -> User:
+        user_id = self.session.scalar(select(NaverUser.user_id).where(NaverUser.naver_id == naver_id))
+        if user_id is None:
+            raise NotLinkedNaverAccountError()
+
+        user = self.session.scalar(select(User).where(User.id == user_id))
+        if not user:
+            raise UserNotFoundError()
+        
+        return user

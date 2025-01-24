@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, InvalidConfirmPasswordError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError
 
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -12,6 +12,8 @@ from uuid import uuid4
 from dotenv import load_dotenv
 import os
 import bcrypt
+
+import httpx
 
 load_dotenv(dotenv_path = '.env.prod')
 SECRET = os.getenv("SECRET_FOR_JWT") # .env.prod에서 불러오기
@@ -145,4 +147,43 @@ class UserService:
         #새 비밀번호 해싱하기
         hashed_new_password = self.hash_password(new_password)        
         return self.user_store.reset_password(userid=user.userid, new_password=hashed_new_password)
+    
+    # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
+    async def get_naver_id_with_naver_access_token(self, access_token: str) -> str:
+
+        url = "https://openapi.naver.com/v1/nid/me" # 네이버 프로필 조회 API
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            if response.status_code != 200:
+                if response.status_code == 401 and response.json().get("resultcode") == "024": # "024": 네이버 인증 실패 에러 코드 https://developers.naver.com/docs/login/profile/profile.md
+                    raise InvalidNaverTokenError()
+                else:
+                    raise NaverApiError()
+            
+            data = response.json()
+            naver_id = data.get("response", {}).get("id")   # 회원의 네이버 고유 식별 id
+            
+        if naver_id is None:
+            raise NaverApiError()
+            
+        return naver_id
+                                                     
+
+    # 네이버 계정과 연동
+    async def link_with_naver(self, user:User, naver_access_token: str) -> None:
+        naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token) # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
+        self.user_store.link_with_naver(user.userid, naver_id) # User의 네이버 고유 식별 id 등록
+
+    # 네이버 access_token 이용해 로그인
+    async def signin_with_naver_access_token(self, naver_access_token: str):
         
+        naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token)
+        user = self.user_store.get_user_by_naver_id(naver_id)
+        
+        return self.issue_tokens(user.userid)
+
+
+
+

@@ -67,3 +67,15 @@ class InvalidPasswordError(HTTPException):
 class InvalidConfirmPasswordError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_400_BAD_REQUEST, "Invalid confirm password")
+
+class NaverApiError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Naver API error")
+
+class InvalidNaverTokenError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Invalid Naver token")
+
+class NotLinkedNaverAccountError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Not linked Naver account")
