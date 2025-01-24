@@ -98,6 +98,13 @@ class VoteService:
     def get_hot_votes_list(self, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
         return self.vote_store.get_hot_votes_list(start_cursor)
     
+    # 내가 만든 투표 리스트 조회
+    def get_my_votes_list(self, user: User, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
+        return self.vote_store.get_hot_votes_list(user.id, start_cursor)
+    
+    def get_participated_votes_list(self, user: User, start_cursor: datetime|None) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
+        return self.vote_store.get_hot_votes_list(user.id, start_cursor)
+
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
         return self.vote_store.get_vote_by_vote_id(vote_id=vote_id)

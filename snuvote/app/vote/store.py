@@ -209,6 +209,104 @@ class VoteStore:
         return results, has_next, next_cursor
 
 
+    #내가 만든 투표글 리스트
+    def get_my_votes_list(self, user_id: int, start_cursor:datetime|None) ->  tuple[List[tuple[Vote,int]], bool, datetime|None]:
+
+        #커서가 none이면 가장 최신 것부터 self.pagination_size개
+        if start_cursor is None:
+            start_cursor = datetime.now(timezone.utc)
+        
+
+        # 먼저 내가 만든 Vote만 필터링
+        filtered_votes = (
+            select(Vote.id)
+            .where(Vote.create_datetime < start_cursor)
+            .where(Vote.writer_id == user_id)
+            .subquery()
+        )
+
+        #서브 쿼리: filtered_votes의 vote_id별 참가자 수를 구하는 서브 쿼리
+        subquery = (
+            select(
+                Choice.vote_id.label("vote_id"),
+                func.count(func.distinct(ChoiceParticipation.user_id)).label("participant_count")
+            )
+            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id, isouter=True) # 참여가 없는 투표의 경우도 참여자 수는 반환되어야 하므로 left outer join
+            .where(Choice.vote_id.in_(select(filtered_votes.c.id)))  # 필요한 투표만 선택
+            .group_by(Choice.vote_id)
+            .subquery()
+        )
+
+        # 메인 쿼리: 완료된 투표글들만 Vote 정보 + 참여자 수 inner join
+        query = (
+            select(Vote, subquery.c.participant_count)
+            .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
+            .order_by(Vote.create_datetime.desc())
+            .limit(self.pagination_size)
+        )
+
+        # results : 투표 리스트
+        results = self.session.execute(query).all()
+
+        #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
+        has_next = len(results) == self.pagination_size
+        
+        #다음 커서는 self.pagination_size개 중 생성 시간이 가장 과거인 것
+        next_cursor = results[-1][0].create_datetime if has_next else None
+        
+        return results, has_next, next_cursor
+    
+
+    #내가 참여한 투표글 리스트
+    def get_participated_votes_list(self, user_id: int, start_cursor:datetime|None) ->  tuple[List[tuple[Vote,int]], bool, datetime|None]:
+
+        #커서가 none이면 가장 최신 것부터 self.pagination_size개
+        if start_cursor is None:
+            start_cursor = datetime.now(timezone.utc)
+        
+
+        # 먼저 내가 참여한 Vote만 필터링
+        filtered_votes = (
+            select(Vote.id)
+            .join(ChoiceParticipation, ChoiceParticipation.choice_id == Choice.id)
+            .join(Choice, Choice.vote_id == Vote.id)
+            .where(ChoiceParticipation.user_id == user_id)
+            .where(Vote.create_datetime < start_cursor)
+            .subquery()
+        )
+
+        #서브 쿼리: filtered_votes의 vote_id별 참가자 수를 구하는 서브 쿼리
+        subquery = (
+            select(
+                Choice.vote_id.label("vote_id"),
+                func.count(func.distinct(ChoiceParticipation.user_id)).label("participant_count")
+            )
+            .join(ChoiceParticipation, Choice.id == ChoiceParticipation.choice_id, isouter=True) # 참여가 없는 투표의 경우도 참여자 수는 반환되어야 하므로 left outer join
+            .where(Choice.vote_id.in_(select(filtered_votes.c.id)))  # 필요한 투표만 선택
+            .group_by(Choice.vote_id)
+            .subquery()
+        )
+
+        # 메인 쿼리: 완료된 투표글들만 Vote 정보 + 참여자 수 inner join
+        query = (
+            select(Vote, subquery.c.participant_count)
+            .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
+            .order_by(Vote.create_datetime.desc())
+            .limit(self.pagination_size)
+        )
+
+        # results : 투표 리스트
+        results = self.session.execute(query).all()
+
+        #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
+        has_next = len(results) == self.pagination_size
+        
+        #다음 커서는 self.pagination_size개 중 생성 시간이 가장 과거인 것
+        next_cursor = results[-1][0].create_datetime if has_next else None
+        
+        return results, has_next, next_cursor
+
+
     # 투표글 상세 내용 조회
     def get_vote_by_vote_id(self, vote_id: int) -> Vote:
         return self.session.scalar(select(Vote).where(Vote.id == vote_id))
