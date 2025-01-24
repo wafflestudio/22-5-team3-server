@@ -149,7 +149,7 @@ class UserService:
         return self.user_store.reset_password(userid=user.userid, new_password=hashed_new_password)
     
     # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
-    async def get_naver_id(self, access_token: str) -> str:
+    async def get_naver_id_with_naver_access_token(self, access_token: str) -> str:
 
         url = "https://openapi.naver.com/v1/nid/me" # 네이버 프로필 조회 API
         headers = {"Authorization": f"Bearer {access_token}"}
@@ -157,9 +157,10 @@ class UserService:
         async with httpx.AsyncClient() as client:
             response = await client.get(url, headers=headers)
             if response.status_code != 200:
-                if response.status_code == 401 and response.json().get("errorCode") == "024": # "024": 네이버 인증 실패 에러 코드 https://developers.naver.com/docs/login/profile/profile.md
+                if response.status_code == 401 and response.json().get("resultcode") == "024": # "024": 네이버 인증 실패 에러 코드 https://developers.naver.com/docs/login/profile/profile.md
                     raise InvalidNaverTokenError()
-                else: raise NaverApiError()
+                else:
+                    raise NaverApiError()
             
             data = response.json()
             naver_id = data.get("response", {}).get("id")   # 회원의 네이버 고유 식별 id
@@ -168,12 +169,11 @@ class UserService:
             raise NaverApiError()
             
         return naver_id
-            
-                                                    
+                                                     
 
     # 네이버 계정과 연동
-    async def link_with_naver(self, user:User, access_token: str) -> None:
-        naver_id = await self.get_naver_id(access_token) # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
+    async def link_with_naver(self, user:User, naver_access_token: str) -> None:
+        naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token) # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
         self.user_store.link_with_naver(user.userid, naver_id) # User의 네이버 고유 식별 id 등록
 
 
