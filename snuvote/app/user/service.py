@@ -212,5 +212,10 @@ class UserService:
         kakao_id = await self.get_kakao_id_with_kakao_access_token(kakao_access_token) # 카카오 access_token 이용해 User의 카카오 고유 식별 id 가져오기
         self.user_store.link_with_kakao(user.userid, kakao_id) # User의 카카오 고유 식별 id 등록
 
-
+    # 카카오 access_token 이용해 로그인
+    async def signin_with_kakao_access_token(self, kakao_access_token: str):
+        kakao_id = await self.get_kakao_id_with_kakao_access_token(kakao_access_token)
+        user = self.user_store.get_user_by_kakao_id(kakao_id)
+        
+        return self.issue_tokens(user.userid)
 

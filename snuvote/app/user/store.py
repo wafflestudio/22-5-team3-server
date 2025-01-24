@@ -3,7 +3,7 @@ from typing import Annotated
 from datetime import datetime
 
 from fastapi import Depends
-from snuvote.app.user.errors import EmailAlreadyExistsError, UserIdAlreadyExistsError, NotLinkedNaverAccountError, UserNotFoundError
+from snuvote.app.user.errors import EmailAlreadyExistsError, UserIdAlreadyExistsError, NotLinkedNaverAccountError, UserNotFoundError, NotLinkedKakaoAccountError, KakaoLinkAlreadyExistsError
 from snuvote.database.models import User, BlockedRefreshToken, NaverUser, KakaoUser
 
 from snuvote.database.connection import get_db_session
@@ -81,4 +81,15 @@ class UserStore:
         user = self.get_user_by_userid(userid)
         new_naveruser = KakaoUser(user_id=user.id, kakao_id=kakao_id)
         self.session.add(new_naveruser)
-        self.session.flush()
+
+    # 카카오 고유 식별 id로 유저 찾기
+    def get_user_by_kakao_id(self, kakao_id: int) -> User:
+        user_id = self.session.scalar(select(KakaoUser.user_id).where(KakaoUser.kakao_id == kakao_id))
+        if user_id is None:
+            raise NotLinkedKakaoAccountError()
+
+        user = self.session.scalar(select(User).where(User.id == user_id))
+        if not user:
+            raise UserNotFoundError()
+        
+        return user

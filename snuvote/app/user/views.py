@@ -109,3 +109,13 @@ async def link_with_kakao(
 ):
     await user_service.link_with_kakao(user, kakao_access_token)
     return "Success"
+
+# 카카오 계정으로 로그인
+@user_router.post("/signin/kakao", status_code=HTTP_200_OK)
+async def signin_with_kakao_access_token(
+    user_service: Annotated[UserService, Depends()],
+    kakao_access_token: Annotated[str, Body(...)]  
+):
+    access_token, refresh_token = await user_service.signin_with_kakao_access_token(kakao_access_token)
+
+    return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)
