@@ -79,6 +79,10 @@ class InvalidNaverTokenError(HTTPException):
 class NotLinkedNaverAccountError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "Not linked Naver account")
+    
+class NaverLinkAlreadyExistsError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_409_CONFLICT, "Naver link already exists")
 
 class KakaoApiError(HTTPException):
     def __init__(self) -> None:
@@ -88,3 +92,10 @@ class InvalidKakaoTokenError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "Invalid Kakao token")
 
+class NotLinkedKakaoAccountError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Not linked Kakao account")
+
+class KakaoLinkAlreadyExistsError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_409_CONFLICT, "Kakao link already exists")
