@@ -80,7 +80,7 @@ def reset_password(
     return "Success"
 
 # 네이버 계정과 연동
-@user_router.post("/link/naver", status_code=HTTP_200_OK)
+@user_router.post("/link/naver", status_code=HTTP_201_CREATED)
 async def link_with_naver(
     user: Annotated[User, Depends(login_with_access_token)],
     user_service: Annotated[UserService, Depends()],
