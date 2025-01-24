@@ -26,6 +26,8 @@ class User(Base):
 
     naver_user: Mapped[Optional["NaverUser"]] = relationship("NaverUser", back_populates="user", uselist=False)
 
+    kakao_user: Mapped[Optional["KakaoUser"]] = relationship("KakaoUser", back_populates="user", uselist=False)
+
 class NaverUser(Base):
     __tablename__ = "naver_user"
 
@@ -35,6 +37,16 @@ class NaverUser(Base):
     user: Mapped["User"] = relationship("User", back_populates="naver_user", uselist=False)
 
     naver_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+
+class KakaoUser(Base):
+    __tablename__ = "kakao_user"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("user.id"))
+    user: Mapped["User"] = relationship("User", back_populates="kakao_user", uselist=False)
+
+    kakao_id: Mapped[str] = mapped_column(BigInteger, unique=True, index=True)
 
 class Vote(Base):
     __tablename__ = "vote"

@@ -99,3 +99,13 @@ async def signin_with_naver_access_token(
     access_token, refresh_token = await user_service.signin_with_naver_access_token(naver_access_token)
 
     return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)
+    
+# 카카오 계정과 연동
+@user_router.post("/link/kakao", status_code=HTTP_201_CREATED)
+async def link_with_kakao(
+    user: Annotated[User, Depends(login_with_access_token)],
+    user_service: Annotated[UserService, Depends()],
+    kakao_access_token: Annotated[str, Body(...)]  
+):
+    await user_service.link_with_kakao(user, kakao_access_token)
+    return "Success"

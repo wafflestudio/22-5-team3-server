@@ -79,3 +79,12 @@ class InvalidNaverTokenError(HTTPException):
 class NotLinkedNaverAccountError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_401_UNAUTHORIZED, "Not linked Naver account")
+
+class KakaoApiError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Kakao API error")
+
+class InvalidKakaoTokenError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_401_UNAUTHORIZED, "Invalid Kakao token")
+

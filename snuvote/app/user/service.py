@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError, KakaoApiError, InvalidKakaoTokenError
 
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -184,6 +184,33 @@ class UserService:
         
         return self.issue_tokens(user.userid)
 
+    async def get_kakao_id_with_kakao_access_token(self, kakao_access_token) -> int:
+        url = "https://kapi.kakao.com/v2/user/me" # 카카오 프로필 조회 API
+        headers = {
+            "Authorization": f"Bearer {kakao_access_token}",
+            "Content-type": "application/x-www-form-urlencoded;charset=utf-8"
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            if response.status_code != 200:
+                if response.status_code == 401 and response.json().get("code") == -401: # "024": 카카오 인증 실패 에러 코드 https://developers.kakao.com/docs/latest/ko/rest-api/reference#response-format
+                    raise InvalidKakaoTokenError()
+                else:
+                    raise KakaoApiError()
+            
+            data = response.json()
+            kakao_id = data.get("id")   # 회원의 카카오 고유 식별 id
+            
+        if kakao_id is None:
+            raise KakaoApiError()
+            
+        return kakao_id
+
+    # 카카오 계정과 연동
+    async def link_with_kakao(self, user:User, kakao_access_token: str) -> None:
+        kakao_id = await self.get_kakao_id_with_kakao_access_token(kakao_access_token) # 카카오 access_token 이용해 User의 카카오 고유 식별 id 가져오기
+        self.user_store.link_with_kakao(user.userid, kakao_id) # User의 카카오 고유 식별 id 등록
 
 
 
