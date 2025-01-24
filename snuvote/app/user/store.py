@@ -61,6 +61,6 @@ class UserStore:
     # 네이버 고유 식별 id 등록
     def link_with_naver(self, userid: str, naver_id: str):
         user = self.get_user_by_userid(userid)
-        new_naveruser = NaverUser(id=user.id, naver_id=naver_id)
+        new_naveruser = NaverUser(user_id=user.id, naver_id=naver_id)
         self.session.add(new_naveruser)
         self.session.flush()

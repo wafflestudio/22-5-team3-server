@@ -24,10 +24,16 @@ class User(Base):
 
     comments: Mapped[Optional[List["Comment"]]] = relationship("Comment", back_populates="writer")
 
+    naver_user: Mapped[Optional["NaverUser"]] = relationship("NaverUser", back_populates="user", uselist=False)
+
 class NaverUser(Base):
     __tablename__ = "naver_user"
 
-    id: Mapped[int] = mapped_column(BigInteger, ForeignKey("user.id"), primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("user.id"))
+    user: Mapped["User"] = relationship("User", back_populates="naver_user", uselist=False)
+
     naver_id: Mapped[str] = mapped_column(String(50), unique=True, index=True)
 
 class Vote(Base):
