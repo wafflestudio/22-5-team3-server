@@ -54,7 +54,6 @@ class UserStore:
     #비밀번호 변경하기
     def reset_password(self, userid:str, new_password:str) -> None:
         user = self.get_user_by_userid(userid)
-        print(userid, user)
         user.hashed_password = new_password
         self.session.flush()
 
