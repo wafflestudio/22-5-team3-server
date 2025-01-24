@@ -79,6 +79,10 @@ def get_votes_list(
         results, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
     elif category == "hot":
         results, has_next, next_cursor = vote_service.get_hot_votes_list(start_cursor)
+    elif category == "made":
+        results, has_next, next_cursor = vote_service.get_my_votes_list(user, start_cursor)
+    elif category == "participated":
+        results, has_next, next_cursor = vote_service.get_participated_votes_list(user, start_cursor)
     else: raise InvalidVoteListCategoryError()
 
     return OnGoingVotesListResponse(
