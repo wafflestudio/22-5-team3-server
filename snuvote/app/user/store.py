@@ -4,7 +4,7 @@ from datetime import datetime
 
 from fastapi import Depends
 from snuvote.app.user.errors import EmailAlreadyExistsError, UserIdAlreadyExistsError, NotLinkedNaverAccountError, UserNotFoundError
-from snuvote.database.models import User, BlockedRefreshToken, NaverUser
+from snuvote.database.models import User, BlockedRefreshToken, NaverUser, KakaoUser
 
 from snuvote.database.connection import get_db_session
 from sqlalchemy import select, delete
@@ -64,6 +64,7 @@ class UserStore:
         self.session.add(new_naveruser)
         self.session.flush()
 
+    # 네이버 고유 식별 id로 유저 찾기
     def get_user_by_naver_id(self, naver_id: str) -> User:
         user_id = self.session.scalar(select(NaverUser.user_id).where(NaverUser.naver_id == naver_id))
         if user_id is None:
@@ -74,3 +75,10 @@ class UserStore:
             raise UserNotFoundError()
         
         return user
+
+    # 카카오 고유 식별 id 등록
+    def link_with_kakao(self, userid: str, kakao_id: int):
+        user = self.get_user_by_userid(userid)
+        new_naveruser = KakaoUser(user_id=user.id, kakao_id=kakao_id)
+        self.session.add(new_naveruser)
+        self.session.flush()
