@@ -89,3 +89,13 @@ async def link_with_naver(
     await user_service.link_with_naver(user, access_token)
 
     return "Success"
+
+# 네이버 계정으로 로그인
+@user_router.post("/signin/naver", status_code=HTTP_200_OK)
+async def signin_with_naver_access_token(
+    user_service: Annotated[UserService, Depends()],
+    naver_access_token: Annotated[str, Body(...)]  
+):
+    access_token, refresh_token = await user_service.signin_with_naver_access_token(naver_access_token)
+
+    return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)

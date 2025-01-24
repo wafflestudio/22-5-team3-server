@@ -176,6 +176,14 @@ class UserService:
         naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token) # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
         self.user_store.link_with_naver(user.userid, naver_id) # User의 네이버 고유 식별 id 등록
 
+    # 네이버 access_token 이용해 로그인
+    async def signin_with_naver_access_token(self, naver_access_token: str):
+        
+        naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token)
+        user = self.user_store.get_user_by_naver_id(naver_id)
+        
+        return self.issue_tokens(user.userid)
+
 
 
 
