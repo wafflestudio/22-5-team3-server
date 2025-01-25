@@ -93,7 +93,8 @@ class ChoiceDetailResponse(BaseModel):
             participants_name = None
         
         # 실시간 결과 공개 투표가 아니고 진행 중인 경우
-        if not realtime_result and end_datetime > datetime.now(timezone.utc):
+        #수정중
+        if not realtime_result:
             num_participants = None
             participants_name = None
 
