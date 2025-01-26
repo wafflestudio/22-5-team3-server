@@ -173,18 +173,22 @@ class VoteStore:
         return results, has_next, next_cursor
 
 
-    def get_hot_votes_list(self, start_cursor:datetime|None) ->  tuple[List[tuple[Vote,int]], bool, datetime|None]:
+    def get_hot_votes_list(self, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
-            start_cursor = datetime.now(timezone.utc)
+            start_cursor = tuple(datetime.now(timezone.utc), 0)
         
 
         # 먼저 필요한 Vote만 필터링
         filtered_votes = (
             select(Vote.id)
-            .where(Vote.create_datetime < start_cursor)
-            .where(Vote.end_datetime > datetime.now(timezone.utc))
+            .where(
+                (Vote.create_datetime < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
+                | (
+                    (Vote.create_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
+                )
+            )
             .subquery()
         )
 
@@ -205,7 +209,7 @@ class VoteStore:
             select(Vote, subquery.c.participant_count)
             .join(subquery, Vote.id == subquery.c.vote_id)
             .where(subquery.c.participant_count >= 5)  # 참여자 수 5명 이상 조건
-            .order_by(Vote.create_datetime.desc())
+            .order_by(Vote.create_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
         )
 
@@ -216,7 +220,7 @@ class VoteStore:
         has_next = len(results) == self.pagination_size
         
         #다음 커서는 self.pagination_size개 중 가장 과거에 생성된 것
-        next_cursor = results[-1][0].create_datetime if has_next else None
+        next_cursor = (results[-1][0].create_datetime, results[-1][0].id) if has_next else None
         
         return results, has_next, next_cursor
 
