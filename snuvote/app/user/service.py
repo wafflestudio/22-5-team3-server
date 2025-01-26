@@ -224,4 +224,8 @@ class UserService:
             raise UserNotFoundError()
         
         return self.issue_tokens(user.userid)
+    
+    # 회원 탈퇴
+    def delete_user(self, user:User) -> None:
+        return self.user_store.delete_user(user)
 

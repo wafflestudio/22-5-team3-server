@@ -107,3 +107,9 @@ class UserStore:
             raise UserNotFoundError()
         
         return user
+    
+    # 탈퇴하기
+    def delete_user(self, user: User) -> None:
+        user.is_deleted = True
+        user.name = "탈퇴한 회원"
+        self.session.flush()

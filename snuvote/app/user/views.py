@@ -65,6 +65,15 @@ def get_me(
 ):
     return UserInfoResponse.from_user(user)
 
+# 회원 탈퇴
+@user_router.delete("/me", status_code=HTTP_200_OK)
+def delete_me(
+    user: Annotated[User, Depends(login_with_access_token)],
+    user_service: Annotated[UserService, Depends()]
+):
+    user_service.delete_user(user)
+    return "Success"
+
 #비밀번호 변경하기
 @user_router.patch("/reset_pw", status_code=HTTP_200_OK)
 def reset_password(
