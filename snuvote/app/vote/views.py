@@ -7,7 +7,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZE
 
 from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest, CommentRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse, CommentDetailResponse
-from snuvote.app.vote.errors import VoteNotFoundError, ChoiceNotFoundError, CommentNotFoundError, InvalidVoteListCategoryError
+from snuvote.app.vote.errors import VoteNotFoundError, ChoiceNotFoundError, CommentNotFoundError, InvalidVoteListCategoryError, CursorError
 from datetime import datetime, timedelta, timezone
 
 from snuvote.database.models import User
@@ -57,8 +57,17 @@ def get_votes_list(
     user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()],
     category: str,
-    start_cursor: tuple[datetime, int]|None = None
+    start_cursor_time: datetime|None = None,
+    start_cursor_id: int|None = None
 ):
+    start_cursor: tuple[datetime, int]|None = None
+
+    if start_cursor_time is not None and start_cursor_id is not None:
+        start_cursor = (start_cursor_time, start_cursor_id)
+    elif start_cursor_time is not None or start_cursor_id is not None:
+        raise CursorError()
+
+
     if category == "ended":
         results, has_next, next_cursor = vote_service.get_ended_votes_list(start_cursor)
     elif category == "ongoing":
