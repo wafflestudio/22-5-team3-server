@@ -73,7 +73,7 @@ class UserService:
     #처음 로그인
     def signin(self, userid: str, password: str) -> tuple[str, str]:
         user = self.get_user_by_userid(userid)
-        if user is None or not self.verify_password(password, user.hashed_password):
+        if user is None or not self.verify_password(password, user.hashed_password) or user.is_deleted:
             raise InvalidUsernameOrPasswordError()
         return self.issue_tokens(userid)
     
