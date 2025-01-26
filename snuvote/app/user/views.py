@@ -19,7 +19,7 @@ def login_with_access_token(
     token = credentials.credentials # Authorization 헤더에서 Bearer: 를 제외한 token만 추출
     userid = user_service.validate_access_token(token)
     user = user_service.get_user_by_userid(userid)
-    if not user:
+    if not user or user.is_deleted:
         raise UserNotFoundError()
     return user
 
