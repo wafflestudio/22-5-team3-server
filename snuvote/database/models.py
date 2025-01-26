@@ -28,6 +28,8 @@ class User(Base):
 
     kakao_user: Mapped[Optional["KakaoUser"]] = relationship("KakaoUser", back_populates="user", uselist=False)
 
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="0")
+
 class NaverUser(Base):
     __tablename__ = "naver_user"
 
