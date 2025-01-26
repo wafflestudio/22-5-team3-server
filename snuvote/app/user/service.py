@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError, KakaoApiError, InvalidKakaoTokenError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError, KakaoApiError, InvalidKakaoTokenError, UserNotFoundError
 
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -182,6 +182,9 @@ class UserService:
         naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token)
         user = self.user_store.get_user_by_naver_id(naver_id)
         
+        if user.is_deleted:
+            raise UserNotFoundError()
+        
         return self.issue_tokens(user.userid)
 
     async def get_kakao_id_with_kakao_access_token(self, kakao_access_token) -> int:
@@ -216,6 +219,9 @@ class UserService:
     async def signin_with_kakao_access_token(self, kakao_access_token: str):
         kakao_id = await self.get_kakao_id_with_kakao_access_token(kakao_access_token)
         user = self.user_store.get_user_by_kakao_id(kakao_id)
+        
+        if user.is_deleted:
+            raise UserNotFoundError()
         
         return self.issue_tokens(user.userid)
 
