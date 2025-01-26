@@ -57,7 +57,7 @@ def get_votes_list(
     user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()],
     category: str,
-    start_cursor: datetime|None = None
+    start_cursor: tuple[datetime, int]|None = None
 ):
     if category == "ended":
         results, has_next, next_cursor = vote_service.get_ended_votes_list(start_cursor)
