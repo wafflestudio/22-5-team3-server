@@ -333,6 +333,12 @@ class VoteStore:
         self.session.commit()
         return vote
     
+    #투표 조기 종료하기
+    def close_vote(self, vote_id: int) -> None:
+        vote = self.get_vote_by_vote_id(vote_id)
+        vote.end_datetime = datetime.now(timezone.utc)
+        self.session.commit()
+    
     def create_comment(self, vote_id: int, writed_id: int, content: str) -> Vote:
         comment = Comment(vote_id=vote_id, writer_id=writed_id, content=content,
                           create_datetime=datetime.now(timezone.utc),

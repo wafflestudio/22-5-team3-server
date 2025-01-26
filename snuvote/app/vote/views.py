@@ -148,6 +148,24 @@ def paricipate_vote(
 
     return get_vote(vote.id, user, vote_service)
 
+#투표 조기 종료하기
+@vote_router.patch("/{vote_id}/close", status_code=HTTP_200_OK)
+def close_vote(
+    vote_id: int,
+    user: Annotated[User, Depends(login_with_access_token)],
+    vote_service: Annotated[VoteService, Depends()]
+):
+    vote = vote_service.get_vote_by_vote_id(vote_id = vote_id)
+
+    # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
+    if not vote:
+        raise VoteNotFoundError()
+    
+    vote_service.close_vote(vote, user)
+
+    return get_vote(vote.id, user, vote_service)
+
+
 # 댓글 추가하기
 @vote_router.post("/{vote_id}/comment", status_code=HTTP_201_CREATED)
 def create_comment(

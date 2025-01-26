@@ -69,6 +69,10 @@ class InvalidFileExtensionError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_400_BAD_REQUEST, "Invalid file extension")
 
+class VoteNotYoursError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_403_FORBIDDEN, "Vote not yours")
+
 
 class InvalidVoteListCategoryError(HTTPException):
     def __init__(self) -> None:

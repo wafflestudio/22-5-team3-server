@@ -3,7 +3,7 @@ from typing import Annotated, List
 from fastapi import Depends, UploadFile 
 from snuvote.database.models import Vote, User, Choice, ChoiceParticipation, Comment
 from snuvote.app.vote.store import VoteStore
-from snuvote.app.vote.errors import ChoiceNotFoundError, InvalidFieldFormatError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError, CommentNotYoursError, CommentNotInThisVoteError, InvalidFileExtensionError
+from snuvote.app.vote.errors import ChoiceNotFoundError, VoteNotYoursError, MultipleChoicesError, ParticipationCodeError, ParticipationCodeNotProvidedError, WrongParticipationCodeError, EndedVoteError, CommentNotYoursError, CommentNotInThisVoteError, InvalidFileExtensionError
 from snuvote.app.vote.dto.requests import ParticipateVoteRequest, CommentRequest
 
 from datetime import datetime, timedelta, timezone
@@ -137,6 +137,19 @@ class VoteService:
         choice_id_list = participate_vote_request.participated_choice_ids
 
         return self.vote_store.participate_vote(vote=vote, user_id=user_id, choice_id_list=choice_id_list)
+    
+    #투표 조기 종료하기
+    def close_vote(self, vote:Vote, user: User)-> None:
+
+        #만약 투표 작성자가 아닐 경우
+        if vote.writer_id != user.id:
+            raise VoteNotYoursError()
+        
+        if vote.end_datetime <= datetime.now(tz=timezone.utc).replace(tzinfo=None):
+            raise EndedVoteError()
+        
+        self.vote_store.close_vote(vote_id=vote.id)
+    
     
     def create_comment(self, vote: Vote, user: User, comment_request: CommentRequest) -> None:
         self.vote_store.create_comment(vote_id=vote.id, writed_id=user.id, content=comment_request.content)
