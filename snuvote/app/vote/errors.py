@@ -12,6 +12,10 @@ class InvalidFieldFormatError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_400_BAD_REQUEST, "Invalid field format")
 
+class DuplicateChoiceError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_400_BAD_REQUEST, "Duplicate choice IDs are not allowed")
+
 class ParticipationCodeError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_400_BAD_REQUEST, "Participation code is required but not provided")

@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, Field
 from pydantic.functional_validators import AfterValidator
 from datetime import datetime, timezone, timedelta
 
-from snuvote.app.vote.errors import InvalidFieldFormatError, ChoicesNotProvidedError, ChoiceInvalidFormatError, InvalidEndTimeError
+from snuvote.app.vote.errors import InvalidFieldFormatError, ChoicesNotProvidedError, ChoiceInvalidFormatError, InvalidEndTimeError, DuplicateChoiceError
 
 KST = timezone(timedelta(hours=9), "KST")
 
@@ -76,10 +76,16 @@ class CreateVoteRequest(BaseModel):
     end_datetime: Annotated[datetime, AfterValidator(validate_end_datetime)] # end_datetime은 offset_naive임
     choices: Annotated[List[str], AfterValidator(validate_choices)]
 
+#선택지가 중복되면 안됨
+def validate_unique_ids(value):
+    if len(value) != len(set(value)):
+        raise DuplicateChoiceError()
+    return value
 
 class ParticipateVoteRequest(BaseModel):
-    participated_choice_ids: List[int]
+    participated_choice_ids: Annotated[List[int], AfterValidator(validate_unique_ids)]
     participation_code: str | None = None
+   
 
 def validate_comment_content(value: str) -> str:
     if len(value) < 1:
