@@ -23,6 +23,10 @@ def validate_content(value: str) -> str:
 def validate_participation_code(value: str) -> str:
     if len(value) != 6:
         raise InvalidFieldFormatError()
+    #공백이 있으면 에러
+    if any(char.isspace() for char in value):
+        raise InvalidFieldFormatError()
+    
     return value
 
 """

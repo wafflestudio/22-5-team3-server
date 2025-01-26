@@ -26,6 +26,10 @@ def validate_password(value: str) -> str:
     contains_special = False
 
     for char in value:
+        #공백있으면 에러
+        if char.isspace():
+            raise InvalidFieldFormatError()
+
         if char.isupper():
             contains_uppercase = True
         elif char.islower():
