@@ -103,7 +103,7 @@ class VoteStore:
         query = (
             select(Vote, subquery.c.participant_count)
             .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
-            .order_by(Vote.create_datetime.desc(), Vote.id.desc())
+            .order_by(Vote.create_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
         )
 
@@ -158,7 +158,7 @@ class VoteStore:
         query = (
             select(Vote, subquery.c.participant_count)
             .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
-            .order_by(Vote.end_datetime.desc(), Vote.id.desc())
+            .order_by(Vote.end_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
         )
 
@@ -222,17 +222,22 @@ class VoteStore:
 
 
     #내가 만든 투표글 리스트
-    def get_my_votes_list(self, user_id: int, start_cursor:datetime|None) ->  tuple[List[tuple[Vote,int]], bool, datetime|None]:
+    def get_my_votes_list(self, user_id: int, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
-            start_cursor = datetime.now(timezone.utc)
+            start_cursor = tuple(datetime.now(timezone.utc), 0)
         
 
         # 먼저 내가 만든 Vote만 필터링
         filtered_votes = (
             select(Vote.id)
-            .where(Vote.create_datetime < start_cursor)
+            .where(
+                (Vote.create_datetime < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
+                | (
+                    (Vote.create_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
+                )
+            )
             .where(Vote.writer_id == user_id)
             .subquery()
         )
@@ -253,7 +258,7 @@ class VoteStore:
         query = (
             select(Vote, subquery.c.participant_count)
             .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
-            .order_by(Vote.create_datetime.desc())
+            .order_by(Vote.create_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
         )
 
@@ -264,17 +269,17 @@ class VoteStore:
         has_next = len(results) == self.pagination_size
         
         #다음 커서는 self.pagination_size개 중 생성 시간이 가장 과거인 것
-        next_cursor = results[-1][0].create_datetime if has_next else None
+        next_cursor = (results[-1][0].create_datetime, results[-1][0].id) if has_next else None
         
         return results, has_next, next_cursor
     
 
     #내가 참여한 투표글 리스트
-    def get_participated_votes_list(self, user_id: int, start_cursor:datetime|None) ->  tuple[List[tuple[Vote,int]], bool, datetime|None]:
+    def get_participated_votes_list(self, user_id: int, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
-            start_cursor = datetime.now(timezone.utc)
+            start_cursor = tuple(datetime.now(timezone.utc), 0)
         
 
         # 먼저 내가 참여한 Vote만 필터링
@@ -283,7 +288,12 @@ class VoteStore:
             .join(ChoiceParticipation, ChoiceParticipation.choice_id == Choice.id)
             .join(Choice, Choice.vote_id == Vote.id)
             .where(ChoiceParticipation.user_id == user_id)
-            .where(Vote.create_datetime < start_cursor)
+            .where(
+                (Vote.create_datetime < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
+                | (
+                    (Vote.create_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
+                )
+            )
             .subquery()
         )
 
@@ -303,7 +313,7 @@ class VoteStore:
         query = (
             select(Vote, subquery.c.participant_count)
             .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
-            .order_by(Vote.create_datetime.desc())
+            .order_by(Vote.create_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
         )
 
@@ -314,7 +324,7 @@ class VoteStore:
         has_next = len(results) == self.pagination_size
         
         #다음 커서는 self.pagination_size개 중 생성 시간이 가장 과거인 것
-        next_cursor = results[-1][0].create_datetime if has_next else None
+        next_cursor = (results[-1][0].create_datetime, results[-1][0].id) if has_next else None
         
         return results, has_next, next_cursor
 

@@ -87,22 +87,23 @@ class VoteService:
 
 
     # 진행 중인 투표 리스트 조회
-    def get_ongoing_list(self, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
+    def get_ongoing_list(self, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
         return self.vote_store.get_ongoing_list(start_cursor)
     
     # 완료된 투표글 리스트 조회
-    def get_ended_votes_list(self, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
+    def get_ended_votes_list(self, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
         return self.vote_store.get_ended_votes_list(start_cursor)
     
     # HOT 투표글 리스트 조회
-    def get_hot_votes_list(self, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
+    def get_hot_votes_list(self, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
         return self.vote_store.get_hot_votes_list(start_cursor)
     
     # 내가 만든 투표 리스트 조회
-    def get_my_votes_list(self, user: User, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
+    def get_my_votes_list(self, user: User, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
         return self.vote_store.get_my_votes_list(user.id, start_cursor)
     
-    def get_participated_votes_list(self, user: User, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, datetime|None]:
+    #내가 참여한 투표 리스트 조회
+    def get_participated_votes_list(self, user: User, start_cursor: tuple[datetime, int]) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
         return self.vote_store.get_participated_votes_list(user.id, start_cursor)
 
     # 투표글 상세 내용 조회
