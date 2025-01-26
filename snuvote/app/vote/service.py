@@ -145,6 +145,9 @@ class VoteService:
         if vote.writer_id != user.id:
             raise VoteNotYoursError()
         
+        if vote.end_datetime <= datetime.now(tz=timezone.utc).replace(tzinfo=None):
+            raise EndedVoteError()
+        
         self.vote_store.close_vote(vote_id=vote.id)
     
     
