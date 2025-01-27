@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError, KakaoApiError, InvalidKakaoTokenError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError,NaverLinkAlreadyExistsError, KakaoLinkAlreadyExistsError, KakaoApiError, InvalidKakaoTokenError
 
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -173,6 +173,11 @@ class UserService:
 
     # 네이버 계정과 연동
     async def link_with_naver(self, user:User, naver_access_token: str) -> None:
+        
+        #만약 유저가 이미 네이버 연동이 되어 있다면
+        if user.naver_user is not None:
+            raise NaverLinkAlreadyExistsError()
+
         naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token) # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
         self.user_store.link_with_naver(user.userid, naver_id) # User의 네이버 고유 식별 id 등록
 
@@ -209,6 +214,11 @@ class UserService:
 
     # 카카오 계정과 연동
     async def link_with_kakao(self, user:User, kakao_access_token: str) -> None:
+
+        #만약 유저가 이미 카카오 연동이 되어 있다면
+        if user.kakao_user is not None:
+            raise KakaoLinkAlreadyExistsError()
+        
         kakao_id = await self.get_kakao_id_with_kakao_access_token(kakao_access_token) # 카카오 access_token 이용해 User의 카카오 고유 식별 id 가져오기
         self.user_store.link_with_kakao(user.userid, kakao_id) # User의 카카오 고유 식별 id 등록
 
