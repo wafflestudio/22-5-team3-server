@@ -83,7 +83,8 @@ def get_votes_list(
     return OnGoingVotesListResponse(
         votes_list = [ VotesListInfoResponse.from_vote_user(vote, user, participant_count) for vote, participant_count in results ],
         has_next = has_next,
-        next_cursor = next_cursor
+        next_cursor_time = next_cursor[0] if next_cursor else None,
+        next_cursor_id = next_cursor[1] if next_cursor else None
     )
 
 # 특정 투표글 정보 조회
