@@ -78,12 +78,12 @@ class VoteStore:
         filtered_votes = (
             select(Vote.id)
             .where(
-                (Vote.create_datetime < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
+                (Vote.create_datetime.replace(tzinfo=timezone.utc) < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
                 | (
-                    (Vote.create_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
+                    (Vote.create_datetime.replace(tzinfo=timezone.utc) == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
                 )
             )
-            .where(Vote.end_datetime > datetime.now(timezone.utc))
+            .where(Vote.end_datetime.replace(tzinfo=timezone.utc) > datetime.now(timezone.utc))
             .subquery()
         )
 
@@ -126,17 +126,17 @@ class VoteStore:
         if start_cursor is None:
             filtered_votes = (
                 select(Vote.id)
-                .where(Vote.end_datetime < datetime.now(timezone.utc))
+                .where(Vote.end_datetime.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc))
                 .subquery()
             )
         else: # 커서가 None이 아니면 커서보다 과거에 끝난 투표부터 최근에 끝난 순으로 self.pagination_size개
             filtered_votes = (
                 select(Vote.id)
-                .where(Vote.end_datetime <= datetime.now(timezone.utc))
+                .where(Vote.end_datetime.replace(tzinfo=timezone.utc) <= datetime.now(timezone.utc))
                 .where(
-                    (Vote.end_datetime < start_cursor)  # 종료시간이 커서 시간보다 과거이거나
+                    (Vote.end_datetime.replace(tzinfo=timezone.utc) < start_cursor)  # 종료시간이 커서 시간보다 과거이거나
                     | (
-                        (Vote.end_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 종료시간이 커서와 같은데 id가 더 큰 경우
+                        (Vote.end_datetime.replace(tzinfo=timezone.utc) == start_cursor[0]) & (Vote.id > start_cursor[1]) # 종료시간이 커서와 같은데 id가 더 큰 경우
                     )
                 )
                 .subquery()
@@ -184,9 +184,9 @@ class VoteStore:
         filtered_votes = (
             select(Vote.id)
             .where(
-                (Vote.create_datetime < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
+                (Vote.create_datetime.replace(tzinfo=timezone.utc) < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
                 | (
-                    (Vote.create_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
+                    (Vote.create_datetime.replace(tzinfo=timezone.utc) == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
                 )
             )
             .subquery()
@@ -237,9 +237,9 @@ class VoteStore:
         filtered_votes = (
             select(Vote.id)
             .where(
-                (Vote.create_datetime < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
+                (Vote.create_datetime.replace(tzinfo=timezone.utc) < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
                 | (
-                    (Vote.create_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
+                    (Vote.create_datetime.replace(tzinfo=timezone.utc) == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
                 )
             )
             .where(Vote.writer_id == user_id)
@@ -293,9 +293,9 @@ class VoteStore:
             .join(Choice, Choice.vote_id == Vote.id)
             .where(ChoiceParticipation.user_id == user_id)
             .where(
-                (Vote.create_datetime < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
+                (Vote.create_datetime.replace(tzinfo=timezone.utc) < start_cursor[0])   # 생성 시간이 커서보다 과거이거나
                 | (
-                    (Vote.create_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
+                    (Vote.create_datetime.replace(tzinfo=timezone.utc) == start_cursor[0]) & (Vote.id > start_cursor[1]) # 생성 시간이 커서와 같은데 id가 더 큰 경우
                 )
             )
             .subquery()
