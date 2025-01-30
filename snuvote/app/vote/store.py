@@ -71,7 +71,7 @@ class VoteStore:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
-            start_cursor = tuple(datetime.now(timezone.utc), 0)
+            start_cursor = (datetime.now(timezone.utc), 0)
 
         # 생성 시간이 커서보다 최신인 것부터 오름차순(최신순)으로 self.pagination_size개 리턴
         # 먼저 진행 중인 투표글의 Vote.id만 반환
@@ -134,7 +134,7 @@ class VoteStore:
                 select(Vote.id)
                 .where(Vote.end_datetime <= datetime.now(timezone.utc))
                 .where(
-                    (Vote.end_datetime < start_cursor)  # 종료시간이 커서 시간보다 과거이거나
+                    (Vote.end_datetime < start_cursor[0])  # 종료시간이 커서 시간보다 과거이거나
                     | (
                         (Vote.end_datetime == start_cursor[0]) & (Vote.id > start_cursor[1]) # 종료시간이 커서와 같은데 id가 더 큰 경우
                     )
@@ -177,7 +177,7 @@ class VoteStore:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
-            start_cursor = tuple(datetime.now(timezone.utc), 0)
+            start_cursor = (datetime.now(timezone.utc), 0)
         
 
         # 먼저 필요한 Vote만 필터링
@@ -230,7 +230,7 @@ class VoteStore:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
-            start_cursor = tuple(datetime.now(timezone.utc), 0)
+            start_cursor = (datetime.now(timezone.utc), 0)
         
 
         # 먼저 내가 만든 Vote만 필터링
@@ -283,7 +283,7 @@ class VoteStore:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
-            start_cursor = tuple(datetime.now(timezone.utc), 0)
+            start_cursor = (datetime.now(timezone.utc), 0)
         
 
         # 먼저 내가 참여한 Vote만 필터링

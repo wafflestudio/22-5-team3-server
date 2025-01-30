@@ -64,7 +64,7 @@ class OnGoingVotesListResponse(BaseModel):
     votes_list: List[VotesListInfoResponse]
     has_next: bool
     next_cursor_time: datetime|None = None
-    netx_cursor_id: int|None = None
+    next_cursor_id: int|None = None
 
 class ChoiceDetailResponse(BaseModel):
     choice_id: int
