@@ -7,7 +7,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZE
 
 from snuvote.app.vote.dto.requests import CreateVoteRequest, ParticipateVoteRequest, CommentRequest
 from snuvote.app.vote.dto.responses import OnGoingVotesListResponse, VotesListInfoResponse, VoteDetailResponse, ChoiceDetailResponse, CommentDetailResponse
-from snuvote.app.vote.errors import VoteNotFoundError, ChoiceNotFoundError, CommentNotFoundError, InvalidVoteListCategoryError
+from snuvote.app.vote.errors import VoteNotFoundError, ChoiceNotFoundError, CommentNotFoundError, InvalidVoteListCategoryError, CursorError
 from datetime import datetime, timedelta, timezone
 
 from snuvote.database.models import User
@@ -48,21 +48,7 @@ def create_vote(
 
     return get_vote(vote.id, user, vote_service)
 
-# 진행 중인 투표 리스트 조회
-#아직 프론트에서 list API 변경이 안되어서 남겨둠
-#함수는 지울 예정
-@vote_router.get("/ongoing_list", status_code=HTTP_200_OK)
-def get_ongoing_list(
-    user: Annotated[User, Depends(login_with_access_token)],
-    vote_service: Annotated[VoteService, Depends()],
-    start_cursor: datetime|None = None
-):
-    results, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
-    return OnGoingVotesListResponse(
-        votes_list = [ VotesListInfoResponse.from_vote_user(vote, user, participant_count) for vote, participant_count in results ],
-        has_next = has_next,
-        next_cursor = next_cursor
-    )
+
 
 
 # 완료된/진행중인/hot 투표글 조회
@@ -71,8 +57,17 @@ def get_votes_list(
     user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()],
     category: str,
-    start_cursor: datetime|None = None
+    start_cursor_time: datetime|None = None,
+    start_cursor_id: int|None = None
 ):
+    start_cursor: tuple[datetime, int]|None = None
+
+    if start_cursor_time is not None and start_cursor_id is not None:
+        start_cursor = (start_cursor_time, start_cursor_id)
+    elif start_cursor_time is not None or start_cursor_id is not None:
+        raise CursorError()
+
+
     if category == "ended":
         results, has_next, next_cursor = vote_service.get_ended_votes_list(start_cursor)
     elif category == "ongoing":
@@ -88,7 +83,8 @@ def get_votes_list(
     return OnGoingVotesListResponse(
         votes_list = [ VotesListInfoResponse.from_vote_user(vote, user, participant_count) for vote, participant_count in results ],
         has_next = has_next,
-        next_cursor = next_cursor
+        next_cursor_time = next_cursor[0] if next_cursor else None,
+        next_cursor_id = next_cursor[1] if next_cursor else None
     )
 
 # 특정 투표글 정보 조회

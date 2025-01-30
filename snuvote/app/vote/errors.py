@@ -81,3 +81,8 @@ class VoteNotYoursError(HTTPException):
 class InvalidVoteListCategoryError(HTTPException):
     def __init__(self) -> None:
         super().__init__(HTTP_400_BAD_REQUEST, "Invalid vote list category")
+
+
+class CursorError(HTTPException):
+    def __init__(self) -> None:
+        super().__init__(HTTP_400_BAD_REQUEST, "Invalid cursor field")

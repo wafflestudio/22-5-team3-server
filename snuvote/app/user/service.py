@@ -3,7 +3,8 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError,NaverLinkAlreadyExistsError, KakaoLinkAlreadyExistsError, KakaoApiError, InvalidKakaoTokenError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError, KakaoApiError, InvalidKakaoTokenError, UserNotFoundError
+
 
 import jwt
 from datetime import datetime, timedelta, timezone
@@ -73,7 +74,7 @@ class UserService:
     #처음 로그인
     def signin(self, userid: str, password: str) -> tuple[str, str]:
         user = self.get_user_by_userid(userid)
-        if user is None or not self.verify_password(password, user.hashed_password):
+        if user is None or not self.verify_password(password, user.hashed_password) or user.is_deleted:
             raise InvalidUsernameOrPasswordError()
         return self.issue_tokens(userid)
     
@@ -187,6 +188,9 @@ class UserService:
         naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token)
         user = self.user_store.get_user_by_naver_id(naver_id)
         
+        if user.is_deleted:
+            raise UserNotFoundError()
+        
         return self.issue_tokens(user.userid)
 
     async def get_kakao_id_with_kakao_access_token(self, kakao_access_token) -> int:
@@ -227,5 +231,12 @@ class UserService:
         kakao_id = await self.get_kakao_id_with_kakao_access_token(kakao_access_token)
         user = self.user_store.get_user_by_kakao_id(kakao_id)
         
+        if user.is_deleted:
+            raise UserNotFoundError()
+        
         return self.issue_tokens(user.userid)
+    
+    # 회원 탈퇴
+    def delete_user(self, user:User) -> None:
+        return self.user_store.delete_user(user)
 
