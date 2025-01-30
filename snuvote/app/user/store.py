@@ -86,8 +86,8 @@ class UserStore:
     # 카카오 고유 식별 id 등록
     def link_with_kakao(self, userid: str, kakao_id: int):
         user = self.get_user_by_userid(userid)
-        new_naveruser = KakaoUser(user_id=user.id, kakao_id=kakao_id)
-        self.session.add(new_naveruser)
+        new_kakaouser = KakaoUser(user_id=user.id, kakao_id=kakao_id)
+        self.session.add(new_kakaouser)
         try:
             self.session.flush()
         except IntegrityError as e:
