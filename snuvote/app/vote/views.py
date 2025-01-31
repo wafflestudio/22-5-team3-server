@@ -71,13 +71,13 @@ async def get_votes_list(
     if category == "ended":
         results, has_next, next_cursor = await vote_service.get_ended_votes_list(start_cursor)
     elif category == "ongoing":
-        results, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
+        results, has_next, next_cursor = await vote_service.get_ongoing_list(start_cursor)
     elif category == "hot":
-        results, has_next, next_cursor = vote_service.get_hot_votes_list(start_cursor)
+        results, has_next, next_cursor = await vote_service.get_hot_votes_list(start_cursor)
     elif category == "made":
-        results, has_next, next_cursor = vote_service.get_my_votes_list(user, start_cursor)
+        results, has_next, next_cursor = await vote_service.get_my_votes_list(user, start_cursor)
     elif category == "participated":
-        results, has_next, next_cursor = vote_service.get_participated_votes_list(user, start_cursor)
+        results, has_next, next_cursor = await vote_service.get_participated_votes_list(user, start_cursor)
     else: raise InvalidVoteListCategoryError()
 
     return OnGoingVotesListResponse(
@@ -94,7 +94,6 @@ async def get_vote(
     user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()]
 ):
-    print("get_vote")
     # 해당 vote_id에 해당하는 투표글 조회
     vote = await vote_service.get_vote_by_vote_id(vote_id = vote_id)
     # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
@@ -156,7 +155,7 @@ async def close_vote(
     if not vote:
         raise VoteNotFoundError()
     
-    vote_service.close_vote(vote, user)
+    await vote_service.close_vote(vote, user)
 
     return await get_vote(vote_id, user, vote_service)
 
@@ -177,9 +176,9 @@ async def create_comment(
         raise VoteNotFoundError()
     
     # 댓글 추가하기
-    vote_service.create_comment(vote, user, comment_request)
+    await vote_service.create_comment(vote, user, comment_request)
 
-    return await get_vote(vote.id, user, vote_service)
+    return await get_vote(vote_id, user, vote_service)
 
 # 댓글 수정하기
 @vote_router.patch("/{vote_id}/comment/{comment_id}", status_code=HTTP_200_OK)
@@ -191,7 +190,7 @@ async def edit_comment(
     vote_service: Annotated[VoteService, Depends()]
 ):
     vote = await vote_service.get_vote_by_vote_id(vote_id)
-    comment = vote_service.get_comment_by_comment_id(comment_id)
+    comment = await vote_service.get_comment_by_comment_id(comment_id)
 
     # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
     if not vote:
@@ -202,9 +201,9 @@ async def edit_comment(
         raise CommentNotFoundError()
     
     # 댓글 수정하기
-    vote_service.edit_comment(user, vote, comment, comment_request)
+    await vote_service.edit_comment(user, vote, comment, comment_request)
     
-    return await get_vote(vote.id, user, vote_service)
+    return await get_vote(vote_id, user, vote_service)
 
 # 댓글 삭제하기
 @vote_router.delete("/{vote_id}/comment/{comment_id}", status_code=HTTP_200_OK)
@@ -215,7 +214,7 @@ async def delete_comment(
     vote_service: Annotated[VoteService, Depends()],
 ):
     vote = await vote_service.get_vote_by_vote_id(vote_id)
-    comment = vote_service.get_comment_by_comment_id(comment_id)
+    comment = await vote_service.get_comment_by_comment_id(comment_id)
 
     # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
     if not vote:
@@ -225,6 +224,6 @@ async def delete_comment(
     if not comment:
         raise CommentNotFoundError()
     
-    vote_service.delete_comment(user, vote, comment)
+    await vote_service.delete_comment(user, vote, comment)
 
-    return await get_vote(vote.id, user, vote_service)
+    return await get_vote(vote_id, user, vote_service)

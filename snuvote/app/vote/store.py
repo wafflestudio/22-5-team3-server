@@ -67,7 +67,7 @@ class VoteStore:
         await self.session.flush()
 
     # 진행 중인 투표 리스트 조회
-    def get_ongoing_list(self, start_cursor: tuple[datetime,int] |None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+    async def get_ongoing_list(self, start_cursor: tuple[datetime,int] |None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
@@ -102,12 +102,17 @@ class VoteStore:
         # 메인 쿼리: 현재 진행 중인 투표글들만 Vote 정보 + 참여자 수 inner join
         query = (
             select(Vote, subquery.c.participant_count)
+            .options(
+                subqueryload(Vote.choices).subqueryload(Choice.choice_participations),
+                subqueryload(Vote.images)
+            )
             .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
             .order_by(Vote.create_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
         )
 
-        results = self.session.execute(query).all()
+        results = await self.session.execute(query)
+        results = results.all()
 
         #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
@@ -179,7 +184,7 @@ class VoteStore:
         return results, has_next, next_cursor
 
 
-    def get_hot_votes_list(self, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+    async def get_hot_votes_list(self, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
@@ -213,6 +218,10 @@ class VoteStore:
         #메인 쿼리
         query = (
             select(Vote, subquery.c.participant_count)
+            .options(
+                subqueryload(Vote.choices).subqueryload(Choice.choice_participations),
+                subqueryload(Vote.images)
+            )
             .join(subquery, Vote.id == subquery.c.vote_id)
             .where(subquery.c.participant_count >= 5)  # 참여자 수 5명 이상 조건
             .order_by(Vote.create_datetime.desc(), Vote.id.asc())
@@ -220,7 +229,8 @@ class VoteStore:
         )
 
         # results : 투표 리스트
-        results = self.session.execute(query).all()
+        results = await self.session.execute(query)
+        results = results.all()
 
         #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
@@ -232,7 +242,7 @@ class VoteStore:
 
 
     #내가 만든 투표글 리스트
-    def get_my_votes_list(self, user_id: int, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+    async def get_my_votes_list(self, user_id: int, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
@@ -267,13 +277,18 @@ class VoteStore:
         # 메인 쿼리: 완료된 투표글들만 Vote 정보 + 참여자 수 inner join
         query = (
             select(Vote, subquery.c.participant_count)
+            .options(
+                subqueryload(Vote.choices).subqueryload(Choice.choice_participations),
+                subqueryload(Vote.images)
+            )
             .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
             .order_by(Vote.create_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
         )
 
         # results : 투표 리스트
-        results = self.session.execute(query).all()
+        results = await self.session.execute(query)
+        results = results.all()
 
         #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
@@ -285,7 +300,7 @@ class VoteStore:
     
 
     #내가 참여한 투표글 리스트
-    def get_participated_votes_list(self, user_id: int, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+    async def get_participated_votes_list(self, user_id: int, start_cursor: tuple[datetime,int] |None) ->  tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
 
         #커서가 none이면 가장 최신 것부터 self.pagination_size개
         if start_cursor is None:
@@ -322,13 +337,18 @@ class VoteStore:
         # 메인 쿼리: 완료된 투표글들만 Vote 정보 + 참여자 수 inner join
         query = (
             select(Vote, subquery.c.participant_count)
+            .options(
+                subqueryload(Vote.choices).subqueryload(Choice.choice_participations),
+                subqueryload(Vote.images)
+            )
             .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
             .order_by(Vote.create_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
         )
 
         # results : 투표 리스트
-        results = self.session.execute(query).all()
+        results = await self.session.execute(query)
+        results = results.all()
 
         #만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
@@ -369,27 +389,30 @@ class VoteStore:
     async def close_vote(self, vote_id: int) -> None:
         vote = await self.get_vote_by_vote_id(vote_id)
         vote.end_datetime = datetime.now(timezone.utc)
-        self.session.commit()
+        await self.session.commit()
+        self.session.expire_all()
     
-    def create_comment(self, vote_id: int, writed_id: int, content: str) -> Vote:
+    async def create_comment(self, vote_id: int, writed_id: int, content: str) -> Vote:
         comment = Comment(vote_id=vote_id, writer_id=writed_id, content=content,
                           create_datetime=datetime.now(timezone.utc),
                           is_edited=False)
         self.session.add(comment)
-        self.session.commit()
+        await self.session.commit()
+        self.session.expire_all()
 
-    def get_comment_by_comment_id(self, comment_id: int) -> Comment:
-        return self.session.scalar(select(Comment).where(Comment.id == comment_id))
+    async def get_comment_by_comment_id(self, comment_id: int) -> Comment:
+        return await self.session.scalar(select(Comment).where(Comment.id == comment_id))
     
-    def edit_comment_content(self, comment_id: int, comment_content: str) -> None:
-        comment = self.get_comment_by_comment_id(comment_id)
+    async def edit_comment_content(self, comment_id: int, comment_content: str) -> None:
+        comment = await self.get_comment_by_comment_id(comment_id)
         comment.content = comment_content
         comment.is_edited = True
         comment.edited_datetime = datetime.now(timezone.utc)
-        self.session.commit()
+        await self.session.commit()
+        self.session.expire_all()
 
-    def delete_comment_by_comment_id(self, comment_id: int) -> None:
-        comment = self.get_comment_by_comment_id(comment_id)
+    async def delete_comment_by_comment_id(self, comment_id: int) -> None:
+        comment = await self.get_comment_by_comment_id(comment_id)
 
         # is_deleted = True로 바꾸고, deleted_datetime을 기록
         comment.is_deleted = True
