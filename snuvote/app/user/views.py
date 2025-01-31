@@ -1,12 +1,17 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Header, Body
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.responses import RedirectResponse
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_401_UNAUTHORIZED
 from snuvote.app.user.dto.requests import UserSignupRequest, UserSigninRequest, ResetPasswordRequest
 from snuvote.app.user.dto.responses import UserSigninResponse, UserInfoResponse
 from snuvote.database.models import User
 from snuvote.app.user.service import UserService
 from snuvote.app.user.errors import InvalidTokenError, UserNotFoundError
+
+import secrets
+import os
+import httpx
 
 user_router = APIRouter()
 
@@ -22,6 +27,7 @@ async def login_with_access_token(
     if not user or user.is_deleted:
         raise UserNotFoundError()
     return user
+
 
 
 # signup API
@@ -88,6 +94,38 @@ async def reset_password(
 
     return "Success"
 
+# 네이버 로그인
+@user_router.get("/login_test_naver")
+def login_with_naver():
+    state = secrets.token_urlsafe(16)
+
+    naver_auth_url = (
+        f"https://nid.naver.com/oauth2.0/authorize?response_type=code&"
+        f"client_id={os.getenv('NAVER_CLIENT_ID')}&"
+        f"state={state}&"
+        f"redirect_uri=http://{os.getenv('SERVER_IP')}/api/users/oauth/naver"
+    )
+
+    return RedirectResponse(naver_auth_url)
+
+@user_router.get("/oauth/naver")
+async def naver_callback(code: str, state: str):
+    async with httpx.AsyncClient() as client:
+        url = (
+            f"https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&"
+            f"client_id={os.getenv('NAVER_CLIENT_ID')}&"
+            f"client_secret={os.getenv('NAVER_CLIENT_SECRET')}&"
+            f"code={code}&"
+            f"state={state}"
+        )
+
+        response = await client.get(url)
+        data = response.json()
+        return {"access_token": data.get("access_token")}
+
+
+    return {"code": code, "state": state}
+
 # 네이버 계정과 연동
 @user_router.post("/link/naver", status_code=HTTP_201_CREATED)
 async def link_with_naver(
@@ -108,6 +146,27 @@ async def signin_with_naver_access_token(
     access_token, refresh_token = await user_service.signin_with_naver_access_token(naver_access_token)
 
     return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)
+
+# 테스트용 카카오 콜백 API
+@user_router.get("/oauth/kakao")
+async def kakao_callback(code: str):
+    async with httpx.AsyncClient() as client:
+        url = "https://kauth.kakao.com/oauth/token"
+
+        response = await client.post(
+            url,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
+            },
+            data={
+                    "grant_type": "authorization_code",
+                    "client_id": os.getenv("KAKAO_CLIENT_ID"),
+                    "redirect_uri": f"http://{os.getenv('SERVER_IP')}/api/users/oauth/kakao",
+                    "code": code
+            }
+        )
+        
+        return response.json()
     
 # 카카오 계정과 연동
 @user_router.post("/link/kakao", status_code=HTTP_201_CREATED)

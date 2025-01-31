@@ -33,6 +33,10 @@ class UserStore:
     async def get_user_by_userid(self, userid: str) -> User | None:
         return await self.session.scalar(select(User).options(joinedload(User.naver_user), joinedload(User.kakao_user)).where(User.userid == userid))
 
+    #유저 고유 번호로 유저 찾기
+    async def get_user_by_user_id(self, user_id:int) -> User|None:
+        return await self.session.scalar(select(User).options(joinedload(User.naver_user), joinedload(User.kakao_user)).where(User.id == user_id))
+
     #이메일로 유저찾기
     async def get_user_by_email(self, email: str) -> User | None:
         return await self.session.scalar(select(User).where(User.email == email))
@@ -72,12 +76,12 @@ class UserStore:
                 raise e
 
     # 네이버 고유 식별 id로 유저 찾기
-    def get_user_by_naver_id(self, naver_id: str) -> User:
-        user_id = self.session.scalar(select(NaverUser.user_id).where(NaverUser.naver_id == naver_id))
+    async def get_user_by_naver_id(self, naver_id: str) -> User:
+        user_id = await self.session.scalar(select(NaverUser.user_id).where(NaverUser.naver_id == naver_id))
         if user_id is None:
             raise NotLinkedNaverAccountError()
 
-        user = self.session.scalar(select(User).where(User.id == user_id))
+        user = await self.get_user_by_user_id(user_id)
         if not user:
             raise UserNotFoundError()
         
@@ -87,7 +91,7 @@ class UserStore:
     async def link_with_kakao(self, userid: str, kakao_id: int):
         user = await self.get_user_by_userid(userid)
         new_kakaouser = KakaoUser(user_id=user.id, kakao_id=kakao_id)
-        await self.session.add(new_kakaouser)
+        self.session.add(new_kakaouser)
         try:
             await self.session.flush()
         except IntegrityError as e:
@@ -97,12 +101,12 @@ class UserStore:
                 raise e
 
     # 카카오 고유 식별 id로 유저 찾기
-    def get_user_by_kakao_id(self, kakao_id: int) -> User:
-        user_id = self.session.scalar(select(KakaoUser.user_id).where(KakaoUser.kakao_id == kakao_id))
+    async def get_user_by_kakao_id(self, kakao_id: int) -> User:
+        user_id = await self.session.scalar(select(KakaoUser.user_id).where(KakaoUser.kakao_id == kakao_id))
         if user_id is None:
             raise NotLinkedKakaoAccountError()
 
-        user = self.session.scalar(select(User).where(User.id == user_id))
+        user = await self.get_user_by_user_id(user_id)
         if not user:
             raise UserNotFoundError()
         
