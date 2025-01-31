@@ -12,13 +12,13 @@ user_router = APIRouter()
 
 security = HTTPBearer()
 
-def login_with_access_token(
+async def login_with_access_token(
     user_service: Annotated[UserService, Depends()],
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
 ) -> User:
     token = credentials.credentials # Authorization 헤더에서 Bearer: 를 제외한 token만 추출
     userid = user_service.validate_access_token(token)
-    user = user_service.get_user_by_userid(userid)
+    user = await user_service.get_user_by_userid(userid)
     if not user or user.is_deleted:
         raise UserNotFoundError()
     return user
@@ -26,10 +26,10 @@ def login_with_access_token(
 
 # signup API
 @user_router.post("/signup", status_code=HTTP_201_CREATED)
-def signup(
+async def signup(
     signup_request: UserSignupRequest, user_service: Annotated[UserService, Depends()]
 ):
-    user = user_service.add_user(
+    user = await user_service.add_user(
         signup_request.userid, signup_request.password, signup_request.email, signup_request.name, signup_request.college
     )
 
@@ -42,7 +42,7 @@ async def signin(
     user_service: Annotated[UserService, Depends()],
     signin_request: UserSigninRequest,
 ):
-    access_token, refresh_token = user_service.signin(
+    access_token, refresh_token = await user_service.signin(
         signin_request.userid, signin_request.password
     )
     return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)
@@ -50,12 +50,12 @@ async def signin(
 
 # refresh API
 @user_router.get("/refresh", status_code=HTTP_200_OK)
-def refresh(
+async def refresh(
     user_service: Annotated[UserService, Depends()],
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
 ):
     refresh_token = credentials.credentials
-    access_token, refresh_token = user_service.reissue_tokens(refresh_token)
+    access_token, refresh_token = await user_service.reissue_tokens(refresh_token)
     return UserSigninResponse(access_token=access_token, refresh_token=refresh_token)
 
 # get_me
@@ -67,22 +67,22 @@ def get_me(
 
 # 회원 탈퇴
 @user_router.delete("/me", status_code=HTTP_200_OK)
-def delete_me(
+async def delete_me(
     user: Annotated[User, Depends(login_with_access_token)],
     user_service: Annotated[UserService, Depends()]
 ):
-    user_service.delete_user(user)
+    await user_service.delete_user(user)
     return "Success"
 
 #비밀번호 변경하기
 @user_router.patch("/reset_pw", status_code=HTTP_200_OK)
-def reset_password(
+async def reset_password(
     user: Annotated[User, Depends(login_with_access_token)],
     reset_password_request: ResetPasswordRequest,
     user_service: Annotated[UserService, Depends()]
 ):
     
-    user_service.reset_password(
+    await user_service.reset_password(
         user, reset_password_request.current_password, reset_password_request.new_password
     )
 
