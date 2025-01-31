@@ -9,7 +9,7 @@ import sys
 from snuvote.database.connection import get_db_session
 from sqlalchemy import func, select
 from sqlalchemy import select, delete
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm import Session, aliased, joinedload
 
 KST = timezone(timedelta(hours=9), "KST")
 
@@ -20,7 +20,7 @@ class VoteStore:
     
 
     #투표 추가하기
-    def add_vote(self,
+    async def add_vote(self,
                  writer_id:int,
                  title: str, 
                  content: str, 
@@ -47,24 +47,24 @@ class VoteStore:
                     )
 
         self.session.add(vote)
-        self.session.flush()
+        await self.session.flush()
 
         for choice_content_input in choices:
             choice = Choice(vote_id=vote.id,
                             choice_content = choice_content_input)
             self.session.add(choice)
         
-        self.session.flush()
+        await self.session.flush()
 
         return vote
     
-    def add_vote_image(self, vote_id: int, image_order: int, image_src: str):
+    async def add_vote_image(self, vote_id: int, image_order: int, image_src: str):
         new_voteimage = VoteImage(vote_id = vote_id,
                                   order=image_order,
                                   src = image_src)
         
         self.session.add(new_voteimage)
-        self.session.flush()
+        await self.session.flush()
 
     # 진행 중인 투표 리스트 조회
     def get_ongoing_list(self, start_cursor: tuple[datetime,int] |None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
@@ -334,8 +334,8 @@ class VoteStore:
 
 
     # 투표글 상세 내용 조회
-    def get_vote_by_vote_id(self, vote_id: int) -> Vote:
-        return self.session.scalar(select(Vote).where(Vote.id == vote_id))
+    async def get_vote_by_vote_id(self, vote_id: int) -> Vote:
+        return await self.session.scalar(select(Vote).options(joinedload(Vote.writer), joinedload(Vote.choices).joinedload(Choice.choice_participations).joinedload(ChoiceParticipation.user), joinedload(Vote.comments).joinedload(Comment.writer), joinedload(Vote.images)).where(Vote.id == vote_id))
     
 
     #투표 참여하기
@@ -360,8 +360,8 @@ class VoteStore:
         return vote
     
     #투표 조기 종료하기
-    def close_vote(self, vote_id: int) -> None:
-        vote = self.get_vote_by_vote_id(vote_id)
+    async def close_vote(self, vote_id: int) -> None:
+        vote = await self.get_vote_by_vote_id(vote_id)
         vote.end_datetime = datetime.now(timezone.utc)
         self.session.commit()
     
