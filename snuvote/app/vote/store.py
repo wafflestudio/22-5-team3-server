@@ -9,7 +9,7 @@ import sys
 from snuvote.database.connection import get_db_session
 from sqlalchemy import func, select
 from sqlalchemy import select, delete
-from sqlalchemy.orm import Session, aliased, joinedload
+from sqlalchemy.orm import Session, aliased, joinedload, Load, subqueryload
 
 KST = timezone(timedelta(hours=9), "KST")
 
@@ -119,7 +119,7 @@ class VoteStore:
 
 
     # 완료된 투표글 리스트 조회
-    def get_ended_votes_list(self, start_cursor: tuple[datetime,int] |None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+    async def get_ended_votes_list(self, start_cursor: tuple[datetime,int] |None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
 
         # 필터 쿼리: 완료된 투표글의 Vote.id만 반환
         # 커서가 none이면 가장 최근에 끝난 투표부터 최근에 끝난 순으로 self.pagination_size개
@@ -157,12 +157,18 @@ class VoteStore:
         # 메인 쿼리: 완료된 투표글들만 Vote 정보 + 참여자 수 inner join
         query = (
             select(Vote, subquery.c.participant_count)
+            .options(
+                subqueryload(Vote.choices).subqueryload(Choice.choice_participations),
+                subqueryload(Vote.images)
+            )
             .join(subquery, Vote.id == subquery.c.vote_id) # filtered_votes의 vote 정보와 참여자 수만 표시되어야 하므로 inner join
             .order_by(Vote.end_datetime.desc(), Vote.id.asc())
             .limit(self.pagination_size)
+
         )
 
-        results = self.session.execute(query).all()
+        results = await self.session.execute(query)
+        results = results.all()
 
         # 만약 self.pagination_size개를 꽉 채웠다면 추가 내용이 있을 가능성 있음
         has_next = len(results) == self.pagination_size
@@ -339,25 +345,25 @@ class VoteStore:
     
 
     #투표 참여하기
-    def participate_vote(self, vote: Vote, user_id: int, choice_id_list: List[int]) -> None:
+    async def participate_vote(self, vote: Vote, user_id: int, choice_id_list: List[int]) -> None:
 
         # 참여하려고 하는 투표에 이미 투표를 한 상태라면 이전 선택지 참여는 제거하기
         for choice in vote.choices:
-            choice_participation = self.session.scalar(
+            choice_participation = await self.session.scalar(
                 select(ChoiceParticipation).where((ChoiceParticipation.choice_id == choice.id) & (ChoiceParticipation.user_id == user_id)))
             
             if choice_participation is not None:
-                self.session.delete(choice_participation)
+                await self.session.delete(choice_participation)
         
-        self.session.flush()
+        await self.session.flush()
 
         # 선택한 선택지 생성하기
         for choice_id in choice_id_list:
             choice_participation = ChoiceParticipation(user_id=user_id, choice_id=choice_id)
             self.session.add(choice_participation)
 
-        self.session.commit()
-        return vote
+        await self.session.commit()
+        self.session.expire_all()
     
     #투표 조기 종료하기
     async def close_vote(self, vote_id: int) -> None:

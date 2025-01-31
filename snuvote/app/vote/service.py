@@ -91,8 +91,8 @@ class VoteService:
         return self.vote_store.get_ongoing_list(start_cursor)
     
     # 완료된 투표글 리스트 조회
-    def get_ended_votes_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
-        return self.vote_store.get_ended_votes_list(start_cursor)
+    async def get_ended_votes_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+        return await self.vote_store.get_ended_votes_list(start_cursor)
     
     # HOT 투표글 리스트 조회
     def get_hot_votes_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
@@ -110,7 +110,7 @@ class VoteService:
     async def get_vote_by_vote_id(self, vote_id: int) -> Vote:
         return await self.vote_store.get_vote_by_vote_id(vote_id=vote_id)
     
-    def participate_vote(self, vote: Vote, user: User, participate_vote_request: ParticipateVoteRequest) -> None:
+    async def participate_vote(self, vote: Vote, user: User, participate_vote_request: ParticipateVoteRequest) -> None:
         # 종료 시간 이후인 경우
         if datetime.now(tz=timezone.utc) > vote.end_datetime.replace(tzinfo=timezone.utc): 
             raise EndedVoteError()
@@ -137,7 +137,7 @@ class VoteService:
         user_id = user.id
         choice_id_list = participate_vote_request.participated_choice_ids
 
-        return self.vote_store.participate_vote(vote=vote, user_id=user_id, choice_id_list=choice_id_list)
+        await self.vote_store.participate_vote(vote=vote, user_id=user_id, choice_id_list=choice_id_list)
     
     #투표 조기 종료하기
     def close_vote(self, vote:Vote, user: User)-> None:

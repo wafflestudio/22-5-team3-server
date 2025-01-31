@@ -53,7 +53,7 @@ async def create_vote(
 
 # 완료된/진행중인/hot 투표글 조회
 @vote_router.get("/list", status_code=HTTP_200_OK)
-def get_votes_list(
+async def get_votes_list(
     user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()],
     category: str,
@@ -69,7 +69,7 @@ def get_votes_list(
 
 
     if category == "ended":
-        results, has_next, next_cursor = vote_service.get_ended_votes_list(start_cursor)
+        results, has_next, next_cursor = await vote_service.get_ended_votes_list(start_cursor)
     elif category == "ongoing":
         results, has_next, next_cursor = vote_service.get_ongoing_list(start_cursor)
     elif category == "hot":
@@ -94,7 +94,7 @@ async def get_vote(
     user: Annotated[User, Depends(login_with_access_token)],
     vote_service: Annotated[VoteService, Depends()]
 ):
-    
+    print("get_vote")
     # 해당 vote_id에 해당하는 투표글 조회
     vote = await vote_service.get_vote_by_vote_id(vote_id = vote_id)
     # 해당 vote_id에 해당하는 투표글이 없을 경우 404 Not Found
@@ -125,7 +125,7 @@ async def get_vote(
 
 #투표 참여하기
 @vote_router.post("/{vote_id}/participate", status_code=HTTP_201_CREATED)
-async def paricipate_vote(
+async def participate_vote(
     vote_id: int,
     user: Annotated[User, Depends(login_with_access_token)],
     participate_vote_request: ParticipateVoteRequest,
@@ -140,9 +140,8 @@ async def paricipate_vote(
         raise VoteNotFoundError()
 
     #투표 참여하기
-    vote = vote_service.participate_vote(vote, user, participate_vote_request)
-
-    return await get_vote(vote.id, user, vote_service)
+    await vote_service.participate_vote(vote, user, participate_vote_request)
+    return await get_vote(vote_id, user, vote_service)
 
 #투표 조기 종료하기
 @vote_router.patch("/{vote_id}/close", status_code=HTTP_200_OK)
@@ -159,7 +158,7 @@ async def close_vote(
     
     vote_service.close_vote(vote, user)
 
-    return await get_vote(vote.id, user, vote_service)
+    return await get_vote(vote_id, user, vote_service)
 
 
 # 댓글 추가하기
