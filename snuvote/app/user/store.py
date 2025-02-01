@@ -114,6 +114,17 @@ class UserStore:
     
     # 탈퇴하기
     async def delete_user(self, user: User) -> None:
+        # 회원 탈퇴 처리
         user.is_deleted = True
         user.name = "탈퇴한 회원"
+
+        # 소셜 계정 연동 정보 삭제
+        naver_user = await self.session.scalar(select(NaverUser).where(NaverUser.user_id == user.id))
+        if naver_user:
+            await self.session.delete(naver_user)
+        
+        kakao_user = await self.session.scalar(select(KakaoUser).where(KakaoUser.user_id == user.id))
+        if kakao_user:
+            await self.session.delete(kakao_user)
+            
         await self.session.flush()
