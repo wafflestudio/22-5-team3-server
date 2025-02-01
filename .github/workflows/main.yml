@@ -69,7 +69,36 @@ jobs:
     - name: Deploy to EC2
       run: |
         ssh -i ssh_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "
-          sudo docker pull odumag99/snuvote:${{ env.VERSION }} &&
+
+          # 첫 번째 docker pull 시도
+          echo 'Pulling Docker image...'
+          sudo docker pull odumag99/snuvote:${{ env.VERSION }} 2>&1 | tee pull.log
+
+          # docker pull의 exit code 확인
+          if [ \"\${PIPESTATUS[0]}\" -ne 0 ]; then
+            echo 'Docker pull failed! Checking the error...'
+
+            # no space left on device 오류인 경우
+            if grep -q 'no space left on device' pull.log; then
+              echo 'Disk full detected! Removing old images and retrying...'
+
+              # 기존 Docker 이미지 삭제 후 다시 pull 시도
+              sudo docker rmi \$(sudo docker images -q)
+              sudo docker pull odumag99/snuvote:${{ env.VERSION }}
+
+              # 두 번째 pull도 실패하면 배포 중단
+              if [ \"\${PIPESTATUS[0]}\" -ne 0 ]; then
+                echo 'Second Docker pull failed! Stopping deployment.'
+                exit 1
+              fi
+            
+            # 그 외 오류인 경우 배포 중단
+            else
+              echo 'Unexpected Docker pull error detected! Stopping deployment.'
+              exit 1
+            fi
+          fi
+
           if [ \"\$(sudo docker ps -aq -f name=snuvote)\" ]; then
             sudo docker stop snuvote
             sudo docker rm snuvote
