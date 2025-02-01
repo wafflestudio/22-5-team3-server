@@ -20,7 +20,7 @@ class VoteService:
     def __init__(self, vote_store: Annotated[VoteStore, Depends()]) -> None:
         self.vote_store = vote_store
     
-    def upload_vote_images(self, vote: Vote, images: List[UploadFile]) -> None:
+    async def upload_vote_images(self, vote: Vote, images: List[UploadFile]) -> None:
         # voteimage를 저장하고 DB에 정보를 저장하는 함수
 
         # S3 client 생성
@@ -40,11 +40,11 @@ class VoteService:
             image_src = f'https://{os.getenv("AWS_S3_BUCKET_NAME")}.s3.{os.getenv("AWS_DEFAULT_REGION")}.amazonaws.com/{image_path}'
 
             # VoteImage 테이블에 이미지 정보 저장
-            self.vote_store.add_vote_image(vote_id=vote.id, image_order=image_order, image_src=image_src)
+            await self.vote_store.add_vote_image(vote_id=vote.id, image_order=image_order, image_src=image_src)
 
 
     #투표 추가하기
-    def add_vote(self,
+    async def add_vote(self,
                  writer_id:int,
                  title: str, 
                  content: str, 
@@ -62,7 +62,7 @@ class VoteService:
             raise ParticipationCodeError()
         
         # 투표 추가
-        vote = self.vote_store.add_vote(writer_id=writer_id,
+        vote = await self.vote_store.add_vote(writer_id=writer_id,
                                         title=title,
                                         content=content, 
                                         participation_code_required=participation_code_required,
@@ -81,36 +81,36 @@ class VoteService:
                 extension = filename.split(".")[-1].lower()  # 확장자 추출 및 소문자로 변환
                 if extension not in ALLOWED_EXTENSIONS:
                     raise InvalidFileExtensionError
-            self.upload_vote_images(vote, images)
+            await self.upload_vote_images(vote, images)
 
-        return self.vote_store.get_vote_by_vote_id(vote_id=vote.id)
+        return await self.vote_store.get_vote_by_vote_id(vote_id=vote.id)
 
 
     # 진행 중인 투표 리스트 조회
-    def get_ongoing_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
-        return self.vote_store.get_ongoing_list(start_cursor)
+    async def get_ongoing_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+        return await self.vote_store.get_ongoing_list(start_cursor)
     
     # 완료된 투표글 리스트 조회
-    def get_ended_votes_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
-        return self.vote_store.get_ended_votes_list(start_cursor)
+    async def get_ended_votes_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+        return await self.vote_store.get_ended_votes_list(start_cursor)
     
     # HOT 투표글 리스트 조회
-    def get_hot_votes_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
-        return self.vote_store.get_hot_votes_list(start_cursor)
+    async def get_hot_votes_list(self, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+        return await self.vote_store.get_hot_votes_list(start_cursor)
     
     # 내가 만든 투표 리스트 조회
-    def get_my_votes_list(self, user: User, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
-        return self.vote_store.get_my_votes_list(user.id, start_cursor)
+    async def get_my_votes_list(self, user: User, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+        return await self.vote_store.get_my_votes_list(user.id, start_cursor)
     
     #내가 참여한 투표 리스트 조회
-    def get_participated_votes_list(self, user: User, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
-        return self.vote_store.get_participated_votes_list(user.id, start_cursor)
+    async def get_participated_votes_list(self, user: User, start_cursor: tuple[datetime, int]|None) -> tuple[List[tuple[Vote,int]], bool, tuple[datetime, int]|None]:
+        return await self.vote_store.get_participated_votes_list(user.id, start_cursor)
 
     # 투표글 상세 내용 조회
-    def get_vote_by_vote_id(self, vote_id: int) -> Vote:
-        return self.vote_store.get_vote_by_vote_id(vote_id=vote_id)
+    async def get_vote_by_vote_id(self, vote_id: int) -> Vote:
+        return await self.vote_store.get_vote_by_vote_id(vote_id=vote_id)
     
-    def participate_vote(self, vote: Vote, user: User, participate_vote_request: ParticipateVoteRequest) -> None:
+    async def participate_vote(self, vote: Vote, user: User, participate_vote_request: ParticipateVoteRequest) -> None:
         # 종료 시간 이후인 경우
         if datetime.now(tz=timezone.utc) > vote.end_datetime.replace(tzinfo=timezone.utc): 
             raise EndedVoteError()
@@ -137,10 +137,10 @@ class VoteService:
         user_id = user.id
         choice_id_list = participate_vote_request.participated_choice_ids
 
-        return self.vote_store.participate_vote(vote=vote, user_id=user_id, choice_id_list=choice_id_list)
+        await self.vote_store.participate_vote(vote=vote, user_id=user_id, choice_id_list=choice_id_list)
     
     #투표 조기 종료하기
-    def close_vote(self, vote:Vote, user: User)-> None:
+    async def close_vote(self, vote:Vote, user: User)-> None:
 
         #만약 투표 작성자가 아닐 경우
         if vote.writer_id != user.id:
@@ -149,17 +149,17 @@ class VoteService:
         if vote.end_datetime <= datetime.now(tz=timezone.utc).replace(tzinfo=None):
             raise EndedVoteError()
         
-        self.vote_store.close_vote(vote_id=vote.id)
+        await self.vote_store.close_vote(vote_id=vote.id)
     
     
-    def create_comment(self, vote: Vote, user: User, comment_request: CommentRequest) -> None:
-        self.vote_store.create_comment(vote_id=vote.id, writed_id=user.id, content=comment_request.content)
+    async def create_comment(self, vote: Vote, user: User, comment_request: CommentRequest) -> None:
+        await self.vote_store.create_comment(vote_id=vote.id, writed_id=user.id, content=comment_request.content)
     
-    def get_comment_by_comment_id(self, comment_id:int) -> Comment:
-        return self.vote_store.get_comment_by_comment_id(comment_id)
+    async def get_comment_by_comment_id(self, comment_id:int) -> Comment:
+        return await self.vote_store.get_comment_by_comment_id(comment_id)
 
 
-    def edit_comment(self, user: User, vote: Vote, comment: Comment, comment_request: CommentRequest) -> None:
+    async def edit_comment(self, user: User, vote: Vote, comment: Comment, comment_request: CommentRequest) -> None:
 
         # 만약 해당 Comment가 해당 Vote에 속하는 것이 아닐 경우
         if comment.vote_id != vote.id:
@@ -171,12 +171,12 @@ class VoteService:
 
         
         # 해당 comment_content 수정
-        self.vote_store.edit_comment_content(
+        await self.vote_store.edit_comment_content(
             comment_id = comment.id,
             comment_content = comment_request.content
         )
 
-    def delete_comment(self, user: User, vote: Vote, comment: Comment) -> None:
+    async def delete_comment(self, user: User, vote: Vote, comment: Comment) -> None:
         # 만약 해당 Comment가 해당 Vote에 속하는 것이 아닐 경우
         if comment.vote_id != vote.id:
             raise CommentNotInThisVoteError()
@@ -186,4 +186,4 @@ class VoteService:
             raise CommentNotYoursError()
     
         # 해당 Comment를 삭제
-        self.vote_store.delete_comment_by_comment_id(comment_id = comment.id)
+        await self.vote_store.delete_comment_by_comment_id(comment_id = comment.id)

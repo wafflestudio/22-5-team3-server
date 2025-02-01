@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from snuvote.database.models import User
 from snuvote.app.user.store import UserStore
-from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError, KakaoApiError, InvalidKakaoTokenError, UserNotFoundError
+from snuvote.app.user.errors import InvalidUsernameOrPasswordError, NotAccessTokenError, NotRefreshTokenError, InvalidTokenError, ExpiredTokenError, BlockedRefreshTokenError, InvalidPasswordError, NaverApiError, InvalidNaverTokenError, KakaoApiError, InvalidKakaoTokenError, UserNotFoundError, NaverLinkAlreadyExistsError, KakaoLinkAlreadyExistsError
 
 
 import jwt
@@ -29,13 +29,13 @@ class UserService:
 
     
     #회원가입
-    def add_user(self, userid: str, password: str, email: str, name: str, college: int) -> User:
+    async def add_user(self, userid: str, password: str, email: str, name: str, college: int) -> User:
         hashed_password = self.hash_password(password)
-        return self.user_store.add_user(userid=userid, hashed_password=hashed_password, email=email, name=name, college=college)
+        return await self.user_store.add_user(userid=userid, hashed_password=hashed_password, email=email, name=name, college=college)
 
     #아이디로 유저 찾기
-    def get_user_by_userid(self, userid: str) -> User | None:
-        return self.user_store.get_user_by_userid(userid)
+    async def get_user_by_userid(self, userid: str) -> User | None:
+        return await self.user_store.get_user_by_userid(userid)
     
     #비밀번호 해싱하기
     def hash_password(self, password:str) -> str:
@@ -72,8 +72,8 @@ class UserService:
         return access_token, refresh_token
 
     #처음 로그인
-    def signin(self, userid: str, password: str) -> tuple[str, str]:
-        user = self.get_user_by_userid(userid)
+    async def signin(self, userid: str, password: str) -> tuple[str, str]:
+        user = await self.get_user_by_userid(userid)
         if user is None or not self.verify_password(password, user.hashed_password) or user.is_deleted:
             raise InvalidUsernameOrPasswordError()
         return self.issue_tokens(userid)
@@ -97,7 +97,7 @@ class UserService:
 
 
     #리프레쉬토큰 검증
-    def validate_refresh_token(self, token: str) -> str:
+    async def validate_refresh_token(self, token: str) -> str:
         """
         refresh_token을 검증하고, username을 반환합니다.
         """
@@ -114,13 +114,13 @@ class UserService:
             raise InvalidTokenError()
         if payload["typ"] != TokenType.REFRESH.value:
             raise NotRefreshTokenError()
-        if self.user_store.is_refresh_token_blocked(payload["jti"]):
+        if await self.user_store.is_refresh_token_blocked(payload["jti"]):
             raise BlockedRefreshTokenError()
         
         return payload["sub"]
 
     #만료된 리프레쉬토큰 블랙하기
-    def block_refresh_token(self, refresh_token: str) -> None:
+    async def block_refresh_token(self, refresh_token: str) -> None:
         """
         refresh_token을 블록합니다.
         """
@@ -129,17 +129,17 @@ class UserService:
         )
         token_id = payload["jti"]
         expires_at = datetime.fromtimestamp(payload["exp"])
-        self.user_store.block_refresh_token(token_id, expires_at)
+        await self.user_store.block_refresh_token(token_id, expires_at)
 
     #토큰 새로 발급
-    def reissue_tokens(self, refresh_token: str) -> tuple[str, str]:
-        userid = self.validate_refresh_token(refresh_token)
-        self.block_refresh_token(refresh_token)
+    async def reissue_tokens(self, refresh_token: str) -> tuple[str, str]:
+        userid = await self.validate_refresh_token(refresh_token)
+        await self.block_refresh_token(refresh_token)
         return self.issue_tokens(userid)
     
 
     #비밀번호 변경
-    def reset_password(self, user:User, current_password:str, new_password:str) -> None:
+    async def reset_password(self, user:User, current_password:str, new_password:str) -> None:
 
         #현재 비밀번호를 틀린 경우
         if not self.verify_password(current_password, user.hashed_password):
@@ -147,7 +147,7 @@ class UserService:
         
         #새 비밀번호 해싱하기
         hashed_new_password = self.hash_password(new_password)        
-        return self.user_store.reset_password(userid=user.userid, new_password=hashed_new_password)
+        return await self.user_store.reset_password(userid=user.userid, new_password=hashed_new_password)
     
     # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
     async def get_naver_id_with_naver_access_token(self, access_token: str) -> str:
@@ -180,13 +180,13 @@ class UserService:
             raise NaverLinkAlreadyExistsError()
 
         naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token) # 네이버 access_token 이용해 User의 네이버 고유 식별 id 가져오기
-        self.user_store.link_with_naver(user.userid, naver_id) # User의 네이버 고유 식별 id 등록
+        await self.user_store.link_with_naver(user.userid, naver_id) # User의 네이버 고유 식별 id 등록
 
     # 네이버 access_token 이용해 로그인
     async def signin_with_naver_access_token(self, naver_access_token: str):
         
         naver_id = await self.get_naver_id_with_naver_access_token(naver_access_token)
-        user = self.user_store.get_user_by_naver_id(naver_id)
+        user = await self.user_store.get_user_by_naver_id(naver_id)
         
         if user.is_deleted:
             raise UserNotFoundError()
@@ -224,12 +224,12 @@ class UserService:
             raise KakaoLinkAlreadyExistsError()
         
         kakao_id = await self.get_kakao_id_with_kakao_access_token(kakao_access_token) # 카카오 access_token 이용해 User의 카카오 고유 식별 id 가져오기
-        self.user_store.link_with_kakao(user.userid, kakao_id) # User의 카카오 고유 식별 id 등록
+        await self.user_store.link_with_kakao(user.userid, kakao_id) # User의 카카오 고유 식별 id 등록
 
     # 카카오 access_token 이용해 로그인
     async def signin_with_kakao_access_token(self, kakao_access_token: str):
         kakao_id = await self.get_kakao_id_with_kakao_access_token(kakao_access_token)
-        user = self.user_store.get_user_by_kakao_id(kakao_id)
+        user = await self.user_store.get_user_by_kakao_id(kakao_id)
         
         if user.is_deleted:
             raise UserNotFoundError()
@@ -237,6 +237,6 @@ class UserService:
         return self.issue_tokens(user.userid)
     
     # 회원 탈퇴
-    def delete_user(self, user:User) -> None:
-        return self.user_store.delete_user(user)
+    async def delete_user(self, user:User) -> None:
+        return await self.user_store.delete_user(user)
 
