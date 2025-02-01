@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from snuvote.database.common import Base
-from snuvote.database.settings import DB_SETTINGS
+from snuvote.database.settings import DB_ALEMBIC_SETTINGS
 
 # TODO 왜 사용되지 않는 모듈을 import 하는 걸까요? 한 번 생각해보세요.
 import snuvote.database.models # noqa: F401
@@ -45,7 +45,7 @@ def run_migrations_offline() -> None:
 
     """
     context.configure(
-        url=DB_SETTINGS.url,
+        url=DB_ALEMBIC_SETTINGS.url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -62,7 +62,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = create_engine(DB_SETTINGS.url, poolclass=pool.NullPool)
+    connectable = create_engine(DB_ALEMBIC_SETTINGS.url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
         context.configure(
