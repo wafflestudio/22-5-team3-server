@@ -6,31 +6,31 @@
 
 
 ## 🧩 워크플로우 
-사진
+<img width="600" alt="workflow" src="https://github.com/user-attachments/assets/20ac5a6e-a401-445e-b1cf-23f1c11a83fd">
 
 ## 👨‍💻 프로젝트 참여자 
 
-| <img width="300" alt="signup" src="https://github.com/user-attachments/assets/693d3964-7c98-4093-92c2-747b32f73cda"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/78034d67-c4f2-4951-bbbf-36cc67be889c"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/1ff80434-8fe5-4af9-9ff4-fbcccd60e714"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/2d4226e1-9178-4f07-a5bd-c6483df43dd8"> | 
+| <img width="300" alt="signup" src="https://github.com/user-attachments/assets/693d3964-7c98-4093-92c2-747b32f73cda"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/78034d67-c4f2-4951-bbbf-36cc67be889c"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/2d4226e1-9178-4f07-a5bd-c6483df43dd8"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/1ff80434-8fe5-4af9-9ff4-fbcccd60e714"> | 
 | --- | --- | --- | --- |
 | <b> [김재민(odumag99)](https://github.com/odumag99) - 팀장</b> | <b>[김동규(morecleverer)](https://github.com/morecleverer)</b> | <b>[오정윤(nyunn2)](https://github.com/nyunn2) </b>| <b>[정희우(huiwoo1010)](https://github.com/huiwoo1010) </b>|
 | <center>FastAPI</center> | <center>FastAPI</center> | <center>Android</center> | <center>Android</center> | 
 
 
-- 김재민
+- <b>김재민</b>
   - 팀장 역할 수행 및 일정 관리
   - 데이터베이스 총 관리
   - 소셜 로그인 구현
   - 투표 참여 및 댓글 api 구현
-- 김동규
+- <b>김동규</b>
   - 앱 디자인 설계 및 CI/CD 설계
   - 사용자 로그인 api 구현
   -  투표 리스트 조회, 유저 페이지 api 구현
-- 오정윤
+- <b>오정윤</b>
   - 회원 가입 구현
   - 투표 리스트 조회 기능 구현
   - 투표 생성 및 참여, 회원 페이지 구현
   - 댓글 기능 구현
-- 정희우
+- <b>정희우</b>
   - 사용자 로그인 페이지 및 자동 로그인 구현
   - 소셜 계정 연동 및 로그인, 로그아웃 구현
   - 투표 리스트 페이지네이션 구현
@@ -56,6 +56,11 @@ boto3 = "^1.36.2"  // AWS SDK for Python (S3 등 AWS 서비스 연동)
 bcrypt = "^4.2.1"  // 비밀번호 해싱 라이브러리
 httpx = "^0.28.1"  // 비동기 HTTP 클라이언트 (Requests 대체)
 ```
+
+
+### API 문서 보기
+[<u>API 문서</u>](http://52.78.27.95/docs#/)
+
 <br>
 
 ### 📱 안드로이드
