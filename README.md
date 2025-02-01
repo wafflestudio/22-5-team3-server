@@ -22,9 +22,9 @@
   - 소셜 로그인 구현
   - 투표 참여 및 댓글 api 구현
 - 김동규
-  - 앱 디자인 설계
-  - CI/CD 설계
-  - 사용자 로그인, 투표 리스트 조회, 유저 페이지 api 구현
+  - 앱 디자인 설계 및 CI/CD 설계
+  - 사용자 로그인 api 구현
+  -  투표 리스트 조회, 유저 페이지 api 구현
 - 오정윤
   - 회원 가입 구현
   - 투표 리스트 조회 기능 구현
@@ -101,39 +101,44 @@ httpx = "^0.28.1"  // 비동기 HTTP 클라이언트 (Requests 대체)
 
 ## 프로젝트 뷰
 ### 1. 회원가입 페이지
-<img width="200" alt="signup" src="https://github.com/user-attachments/assets/336bb886-571f-40e6-ab94-2a00935996bd" />
+|<img width="300" alt="signup" src="https://github.com/user-attachments/assets/336bb886-571f-40e6-ab94-2a00935996bd" />|
+|---|
 
 - 회원가입  
 
 <br>
 
 ### 2. 로그인 페이지
-<img width="200" alt="signup" src="https://github.com/user-attachments/assets/59039575-8705-4e0b-993a-0d36dc7ab80e">
+|<img width="300" alt="signup" src="https://github.com/user-attachments/assets/59039575-8705-4e0b-993a-0d36dc7ab80e">|
+|---|
 
 - ID, PW로 로그인을 하거나 소셜계정으로 로그인합니다
 
 <br>
 
 ### 3. 진행 중인 투표 페이지
-<img width="200" alt="signup" src="https://github.com/user-attachments/assets/c8bcc9da-d3f9-4ea7-b1a7-1c1e07054ba3">
+|<img width="300" alt="signup" src="https://github.com/user-attachments/assets/c8bcc9da-d3f9-4ea7-b1a7-1c1e07054ba3">|
+|---|
 
 - 최신 순으로 진행 중인 투표 리스트를 확인할 수 있습니다.
 
 <br>
 
 ### 4. HOT 투표 페이지
-<img width="200" alt="signup" src="https://github.com/user-attachments/assets/fc81df9b-6706-4f9a-8359-ffdc67c98e40">
+|<img width="300" alt="signup" src="https://github.com/user-attachments/assets/fc81df9b-6706-4f9a-8359-ffdc67c98e40">|
+|---|
 
 - 투표 참여자 수가 5명 이상인 투표 리스트를 확인할 수 있습니다.   
 ### 5. 종료된 투표 페이지
-<img width="200" alt="signup" src="https://github.com/user-attachments/assets/7d4a3283-413d-4cae-b062-4e6897c82dbb">
+|<img width="300" alt="signup" src="https://github.com/user-attachments/assets/7d4a3283-413d-4cae-b062-4e6897c82dbb">|
+|---|
 
 - 마감된 투표 리스트를 확인 할 수 있습니다.
 
 <br>
 
 ### 6. 투표 상세정보 페이지
-| <img width="200" alt="signup" src="https://github.com/user-attachments/assets/4a3cbd26-bcda-4df6-9567-c5c6eb5d5663"> | <img width="200" alt="signup" src="https://github.com/user-attachments/assets/ef29d6de-93b6-4b05-8547-34957bead300"> |
+| <img width="300" alt="signup" src="https://github.com/user-attachments/assets/4a3cbd26-bcda-4df6-9567-c5c6eb5d5663"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/ef29d6de-93b6-4b05-8547-34957bead300"> |
 | --- | --- |
 | <center>진행 중인 투표</center> | <center>종료된 투표</center> |
 
@@ -145,14 +150,15 @@ httpx = "^0.28.1"  // 비동기 HTTP 클라이언트 (Requests 대체)
 <br>
 
 ### 7. 투표 생성 페이지
-<img width="200" alt="signup" src="https://github.com/user-attachments/assets/ed703d48-a88b-4e17-ac63-790ef1471dcf">
+|<img width="300" alt="signup" src="https://github.com/user-attachments/assets/ed703d48-a88b-4e17-ac63-790ef1471dcf">|
+|---|
 
 - 사진, 제목, 설명, 투표 선택지, 투표 설정값, 마감 시간을 설정할 수 있습니다.
 
 <br>
 
 ### 8. 회원 정보 페이지
-| <img width="200" alt="signup" src="https://github.com/user-attachments/assets/7b057a87-d073-434e-ad58-3776624bf5cd"> | <img width="200" alt="signup" src="https://github.com/user-attachments/assets/c2a7e007-d2c0-41c4-b91d-c0f92f626e74"> | <img width="200" alt="signup" src="https://github.com/user-attachments/assets/9175ee40-96c1-4ad6-98b9-7b1abaf335d1"> | <img width="200" alt="signup" src="https://github.com/user-attachments/assets/4e855548-dcc9-468d-8e13-3baca20d0856"> |
+| <img width="300" alt="signup" src="https://github.com/user-attachments/assets/7b057a87-d073-434e-ad58-3776624bf5cd"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/c2a7e007-d2c0-41c4-b91d-c0f92f626e74"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/9175ee40-96c1-4ad6-98b9-7b1abaf335d1"> | <img width="300" alt="signup" src="https://github.com/user-attachments/assets/4e855548-dcc9-468d-8e13-3baca20d0856"> |
 | --- | --- | --- | --- |
 | <center>회원 페이지</center> | <center>비밀번호 변경</center> | <center>내가 참여한 투표</center> | <center>내가 만든 투표</center> |
 
