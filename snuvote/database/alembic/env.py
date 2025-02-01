@@ -1,12 +1,14 @@
 from logging.config import fileConfig
 
-from sqlalchemy import create_engine, engine_from_config
-from sqlalchemy import pool
+import asyncio
+from sqlalchemy import Connection, pool
+from sqlalchemy.ext.asyncio import create_async_engine
+
 
 from alembic import context
 
 from snuvote.database.common import Base
-from snuvote.database.settings import DB_ALEMBIC_SETTINGS
+from snuvote.database.settings import DB_SETTINGS
 
 # TODO 왜 사용되지 않는 모듈을 import 하는 걸까요? 한 번 생각해보세요.
 import snuvote.database.models # noqa: F401
@@ -45,7 +47,7 @@ def run_migrations_offline() -> None:
 
     """
     context.configure(
-        url=DB_ALEMBIC_SETTINGS.url,
+        url=DB_SETTINGS.url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -55,6 +57,20 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+async def run_async_migrations() -> None:
+    connectable = create_async_engine(DB_SETTINGS.url, poolclass=pool.NullPool)
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
@@ -62,15 +78,8 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = create_engine(DB_ALEMBIC_SETTINGS.url, poolclass=pool.NullPool)
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
-
-        with context.begin_transaction():
-            context.run_migrations()
+    asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():
